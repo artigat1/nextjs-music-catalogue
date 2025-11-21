@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react';
 import { getCollection } from '@/firebase/firestore';
 import { Recording } from '@/types';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 export default function SearchPage() {
+    const searchParams = useSearchParams();
+    const queryParam = searchParams.get('q') || '';
+
     const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
     const [filteredRecordings, setFilteredRecordings] = useState<(Recording & { id: string })[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(queryParam);
     const [searchType, setSearchType] = useState<'all' | 'title' | 'artist' | 'theatre'>('all');
 
     useEffect(() => {
@@ -29,6 +33,11 @@ export default function SearchPage() {
 
         fetchAllRecordings();
     }, []);
+
+    // Update search term when query param changes
+    useEffect(() => {
+        setSearchTerm(queryParam);
+    }, [queryParam]);
 
     useEffect(() => {
         if (!searchTerm) {

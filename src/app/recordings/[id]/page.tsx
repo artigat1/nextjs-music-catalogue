@@ -7,6 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import SearchPill from '@/components/ui/SearchPill';
 
 export default function RecordingDetailsPage() {
     const params = useParams();
@@ -91,33 +92,37 @@ export default function RecordingDetailsPage() {
                             <div className="p-8">
                                 <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">Recording</div>
                                 <h1 className="block mt-1 text-3xl leading-tight font-bold text-gray-900">{recording.title}</h1>
-                                <p className="mt-2 text-gray-500">Released: {recording.releaseYear}</p>
-                                {recording.recordingUrl && (
-                                    <div className="mt-4">
-                                        <a
-                                            href={recording.recordingUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block"
-                                        >
-                                            Listen / View
-                                        </a>
-                                    </div>
-                                )}
+                                <p className="mt-2 text-gray-500">
+                                    {recording.recordingDate?.toDate().toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}
+                                </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Theatre Card */}
+                    <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Theatre</h2>
+                        {theatre ? (
+                            <div className="flex flex-wrap gap-2">
+                                <SearchPill label={theatre.name} searchQuery={theatre.name} />
+                                <SearchPill label={theatre.city} searchQuery={theatre.city} />
+                            </div>
+                        ) : (
+                            <p className="text-gray-500">Theatre information not available.</p>
+                        )}
                     </div>
 
                     {/* Artists Card */}
                     <div className="bg-white rounded-lg shadow-sm border p-6">
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Artists</h2>
                         {artists.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-wrap gap-2">
                                 {artists.map(artist => (
-                                    <div key={artist.id} className="border rounded p-4">
-                                        <h3 className="font-semibold text-lg">{artist.name}</h3>
-                                        <p className="text-gray-600 text-sm mt-1">{artist.info}</p>
-                                    </div>
+                                    <SearchPill key={artist.id} label={artist.name} searchQuery={artist.name} />
                                 ))}
                             </div>
                         ) : (
@@ -128,39 +133,28 @@ export default function RecordingDetailsPage() {
                     {/* Creative Team Card */}
                     <div className="bg-white rounded-lg shadow-sm border p-6">
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Creative Team</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
                             <div>
                                 <h3 className="font-semibold text-gray-700 mb-2">Composers</h3>
                                 {composers.length > 0 ? (
-                                    <ul className="list-disc list-inside text-gray-600">
-                                        {composers.map(c => <li key={c.id}>{c.name}</li>)}
-                                    </ul>
+                                    <div className="flex flex-wrap gap-2">
+                                        {composers.map(c => (
+                                            <SearchPill key={c.id} label={c.name} searchQuery={c.name} />
+                                        ))}
+                                    </div>
                                 ) : <p className="text-gray-500 text-sm">None listed</p>}
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-700 mb-2">Lyricists</h3>
                                 {lyricists.length > 0 ? (
-                                    <ul className="list-disc list-inside text-gray-600">
-                                        {lyricists.map(l => <li key={l.id}>{l.name}</li>)}
-                                    </ul>
+                                    <div className="flex flex-wrap gap-2">
+                                        {lyricists.map(l => (
+                                            <SearchPill key={l.id} label={l.name} searchQuery={l.name} />
+                                        ))}
+                                    </div>
                                 ) : <p className="text-gray-500 text-sm">None listed</p>}
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Sidebar / Theatre Info */}
-                <div className="space-y-8">
-                    <div className="bg-white rounded-lg shadow-sm border p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Theatre Details</h2>
-                        {theatre ? (
-                            <div>
-                                <h3 className="font-semibold text-lg">{theatre.name}</h3>
-                                <p className="text-gray-600 mt-1">{theatre.city}, {theatre.country}</p>
-                            </div>
-                        ) : (
-                            <p className="text-gray-500">Theatre information not available.</p>
-                        )}
                     </div>
                 </div>
             </div>

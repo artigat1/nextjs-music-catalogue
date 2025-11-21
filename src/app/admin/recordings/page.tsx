@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { getCollection, addDocument, updateDocument, deleteDocument } from '@/firebase/firestore';
 import { Recording, Theatre, Person } from '@/types';
-import { Timestamp, doc, DocumentReference } from 'firebase/firestore';
+import { Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import Modal from '@/components/ui/Modal';
+import AutocompleteInput from '@/components/ui/AutocompleteInput';
 
 export default function RecordingsPage() {
     const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
@@ -17,9 +18,8 @@ export default function RecordingsPage() {
 
     // Form state
     const [title, setTitle] = useState('');
-    const [recordingUrl, setRecordingUrl] = useState('');
     const [imageUrl, setImageUrl] = useState('');
-    const [releaseYear, setReleaseYear] = useState<number>(new Date().getFullYear());
+    const [recordingDate, setRecordingDate] = useState('');
     const [selectedTheatreId, setSelectedTheatreId] = useState('');
     const [selectedArtistIds, setSelectedArtistIds] = useState<string[]>([]);
     const [selectedComposerIds, setSelectedComposerIds] = useState<string[]>([]);
@@ -51,9 +51,12 @@ export default function RecordingsPage() {
         if (recording) {
             setEditingRecording(recording);
             setTitle(recording.title);
-            setRecordingUrl(recording.recordingUrl);
             setImageUrl(recording.imageUrl);
-            setReleaseYear(recording.releaseYear);
+
+            // Convert Firestore Timestamp to date string for input
+            const recDate = recording.recordingDate?.toDate();
+            setRecordingDate(recDate ? recDate.toISOString().split('T')[0] : '');
+
             setSelectedTheatreId(recording.theatreRef?.id || '');
             setSelectedArtistIds(recording.artistRefs?.map(ref => ref.id) || []);
             setSelectedComposerIds(recording.composerRefs?.map(ref => ref.id) || []);
@@ -61,9 +64,8 @@ export default function RecordingsPage() {
         } else {
             setEditingRecording(null);
             setTitle('');
-            setRecordingUrl('');
             setImageUrl('');
-            setReleaseYear(new Date().getFullYear());
+            setRecordingDate('');
             setSelectedTheatreId('');
             setSelectedArtistIds([]);
             setSelectedComposerIds([]);
@@ -90,12 +92,20 @@ export default function RecordingsPage() {
 
             const artistNames = people.filter(p => selectedArtistIds.includes(p.id)).map(p => p.name);
 
+            // Convert date string to Timestamp
+            const recDateTimestamp = recordingDate
+                ? Timestamp.fromDate(new Date(recordingDate))
+                : Timestamp.now();
+
+            const releaseYear = recordingDate
+                ? new Date(recordingDate).getFullYear()
+                : new Date().getFullYear();
+
             const recordingData: Partial<Recording> = {
                 title,
-                recordingUrl,
                 imageUrl,
                 releaseYear,
-                recordingDate: Timestamp.now(), // Ideally this is a date picker, but using now or release year for simplicity
+                recordingDate: recDateTimestamp,
                 dateUpdated: Timestamp.now(),
                 theatreRef: doc(db, 'theatres', selectedTheatreId),
                 theatreName: theatre.name,
@@ -130,13 +140,15 @@ export default function RecordingsPage() {
         }
     };
 
-    const toggleSelection = (id: string, currentIds: string[], setIds: (ids: string[]) => void) => {
-        if (currentIds.includes(id)) {
-            setIds(currentIds.filter(i => i !== id));
-        } else {
-            setIds([...currentIds, id]);
-        }
-    };
+    const theatreOptions = theatres.map(t => ({
+        id: t.id,
+        label: `${t.name} (${t.city})`
+    }));
+
+    const peopleOptions = people.map(p => ({
+        id: p.id,
+        label: p.name
+    }));
 
     if (loading) return <div>Loading recordings...</div>;
 
@@ -158,7 +170,7 @@ export default function RecordingsPage() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif">Title</th>
                             <th className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif">Theatre</th>
-                            <th className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif">Year</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif">Date</th>
                             <th className="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider font-serif">Actions</th>
                         </tr>
                     </thead>
@@ -167,7 +179,9 @@ export default function RecordingsPage() {
                             <tr key={recording.id} className="hover:bg-surface/30 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{recording.title}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/70">{recording.theatreName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/70">{recording.releaseYear}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/70">
+                                    {recording.recordingDate?.toDate().toLocaleDateString()}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
                                         onClick={() => handleOpenModal(recording)}
@@ -195,122 +209,84 @@ export default function RecordingsPage() {
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
                         />
                     </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Recording URL</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Recording Date</label>
                         <input
-                            type="text"
-                            value={recordingUrl}
-                            onChange={(e) => setRecordingUrl(e.target.value)}
-                            className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
+                            type="date"
+                            value={recordingDate}
+                            onChange={(e) => setRecordingDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
                         />
                     </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Image URL</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                         <input
                             type="text"
                             value={imageUrl}
                             onChange={(e) => setImageUrl(e.target.value)}
-                            className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Release Year</label>
-                        <input
-                            type="number"
-                            value={releaseYear}
-                            onChange={(e) => setReleaseYear(parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
-                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Theatre</label>
-                        <select
-                            value={selectedTheatreId}
-                            onChange={(e) => setSelectedTheatreId(e.target.value)}
-                            className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
-                            required
-                        >
-                            <option value="">Select Theatre</option>
-                            {theatres.map(t => (
-                                <option key={t.id} value={t.id}>{t.name} ({t.city})</option>
-                            ))}
-                        </select>
-                    </div>
+                    <AutocompleteInput
+                        label="Theatre"
+                        placeholder="Search for a theatre..."
+                        options={theatreOptions}
+                        selectedIds={selectedTheatreId ? [selectedTheatreId] : []}
+                        onSelect={(id) => setSelectedTheatreId(id)}
+                        onRemove={() => setSelectedTheatreId('')}
+                    />
 
-                    {/* Multi-selects for people */}
-                    <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Artists</label>
-                        <div className="max-h-32 overflow-y-auto border border-accent/30 rounded-md p-2 bg-background">
-                            {people.map(p => (
-                                <div key={p.id} className="flex items-center mb-1">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedArtistIds.includes(p.id)}
-                                        onChange={() => toggleSelection(p.id, selectedArtistIds, setSelectedArtistIds)}
-                                        className="mr-2 accent-primary"
-                                    />
-                                    <span className="text-sm text-foreground">{p.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <AutocompleteInput
+                        label="Artists"
+                        placeholder="Search for artists..."
+                        options={peopleOptions}
+                        selectedIds={selectedArtistIds}
+                        onSelect={(id) => setSelectedArtistIds([...selectedArtistIds, id])}
+                        onRemove={(id) => setSelectedArtistIds(selectedArtistIds.filter(i => i !== id))}
+                    />
 
-                    <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Composers</label>
-                        <div className="max-h-32 overflow-y-auto border border-accent/30 rounded-md p-2 bg-background">
-                            {people.map(p => (
-                                <div key={p.id} className="flex items-center mb-1">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedComposerIds.includes(p.id)}
-                                        onChange={() => toggleSelection(p.id, selectedComposerIds, setSelectedComposerIds)}
-                                        className="mr-2 accent-primary"
-                                    />
-                                    <span className="text-sm text-foreground">{p.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <AutocompleteInput
+                        label="Composers"
+                        placeholder="Search for composers..."
+                        options={peopleOptions}
+                        selectedIds={selectedComposerIds}
+                        onSelect={(id) => setSelectedComposerIds([...selectedComposerIds, id])}
+                        onRemove={(id) => setSelectedComposerIds(selectedComposerIds.filter(i => i !== id))}
+                    />
 
-                    <div>
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Lyricists</label>
-                        <div className="max-h-32 overflow-y-auto border border-accent/30 rounded-md p-2 bg-background">
-                            {people.map(p => (
-                                <div key={p.id} className="flex items-center mb-1">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedLyricistIds.includes(p.id)}
-                                        onChange={() => toggleSelection(p.id, selectedLyricistIds, setSelectedLyricistIds)}
-                                        className="mr-2 accent-primary"
-                                    />
-                                    <span className="text-sm text-foreground">{p.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <AutocompleteInput
+                        label="Lyricists"
+                        placeholder="Search for lyricists..."
+                        options={peopleOptions}
+                        selectedIds={selectedLyricistIds}
+                        onSelect={(id) => setSelectedLyricistIds([...selectedLyricistIds, id])}
+                        onRemove={(id) => setSelectedLyricistIds(selectedLyricistIds.filter(i => i !== id))}
+                    />
 
                     <div className="flex justify-end gap-3 mt-6">
                         <button
                             type="button"
                             onClick={handleCloseModal}
-                            className="px-4 py-2 text-foreground/70 hover:bg-surface rounded-md transition-colors"
+                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors shadow-sm"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             {editingRecording ? 'Save Changes' : 'Add Recording'}
                         </button>
