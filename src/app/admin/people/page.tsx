@@ -1,35 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCollection, deleteDocument } from '@/firebase/firestore';
-import { Person } from '@/types';
+import { usePeople, useDeletePerson } from '@/hooks/useQueries';
 import Link from 'next/link';
 
 export default function PeoplePage() {
-    const [people, setPeople] = useState<(Person & { id: string })[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchPeople();
-    }, []);
-
-    const fetchPeople = async () => {
-        setLoading(true);
-        try {
-            const data = await getCollection('people');
-            setPeople(data as (Person & { id: string })[]);
-        } catch (error) {
-            console.error("Error fetching people:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: people = [], isLoading: loading } = usePeople();
+    const deletePersonMutation = useDeletePerson();
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this person?')) return;
         try {
-            await deleteDocument('people', id);
-            fetchPeople();
+            await deletePersonMutation.mutateAsync(id);
         } catch (error) {
             console.error("Error deleting person:", error);
         }

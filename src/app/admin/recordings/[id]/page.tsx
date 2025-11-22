@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { getDocument, getCollection, addDocument, updateDocument } from '@/firebase/firestore';
-import { Recording, Theatre, Person } from '@/types';
+import { Recording } from '@/types';
 import { Timestamp, doc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import TheatreCreateModal from '@/components/ui/TheatreCreateModal';
+import {
+    useRecording,
+    useTheatres,
+    usePeople,
+    useAddRecording,
+    useUpdateRecording,
+    useAddPerson,
+    useAddTheatre
+} from '@/hooks/useQueries';
 
 export default function RecordingEditorPage() {
     const router = useRouter();
@@ -15,12 +23,18 @@ export default function RecordingEditorPage() {
     const id = params?.id as string;
     const isNew = id === 'new';
 
-    const [loading, setLoading] = useState(!isNew);
-    const [saving, setSaving] = useState(false);
+    // Queries
+    const { data: recording, isLoading: recordingLoading } = useRecording(id);
+    const { data: theatres = [], isLoading: theatresLoading } = useTheatres();
+    const { data: people = [], isLoading: peopleLoading } = usePeople();
 
-    // Data for dropdowns
-    const [theatres, setTheatres] = useState<(Theatre & { id: string })[]>([]);
-    const [people, setPeople] = useState<(Person & { id: string })[]>([]);
+    // Mutations
+    const addRecordingMutation = useAddRecording();
+    const updateRecordingMutation = useUpdateRecording();
+    const addPersonMutation = useAddPerson();
+    const addTheatreMutation = useAddTheatre();
+
+    const [saving, setSaving] = useState(false);
 
     // Form state
     const [title, setTitle] = useState('');
@@ -37,52 +51,29 @@ export default function RecordingEditorPage() {
     const [pendingTheatreName, setPendingTheatreName] = useState('');
     const [theatreCreateResolve, setTheatreCreateResolve] = useState<((id: string) => void) | null>(null);
 
+    // Load data when recording is fetched
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [theats, peeps] = await Promise.all([
-                    getCollection('theatres'),
-                    getCollection('people')
-                ]);
-                setTheatres(theats as (Theatre & { id: string })[]);
-                setPeople(peeps as (Person & { id: string })[]);
+        if (recording) {
+            setTitle(recording.title || '');
+            setImageUrl(recording.imageUrl || '');
+            setInfo(recording.info || '');
 
-                if (!isNew && id) {
-                    const recData = await getDocument('recordings', id);
-                    if (recData) {
-                        const recording = recData as Recording;
-                        setTitle(recording.title || '');
-                        setImageUrl(recording.imageUrl || '');
-                        setInfo(recording.info || '');
+            const recDate = recording.recordingDate?.toDate();
+            setRecordingDate(recDate ? recDate.toISOString().split('T')[0] : '');
 
-                        const recDate = recording.recordingDate?.toDate();
-                        setRecordingDate(recDate ? recDate.toISOString().split('T')[0] : '');
+            setSelectedTheatreId(recording.theatreRef?.id || '');
 
-                        setSelectedTheatreId(recording.theatreRef?.id || '');
+            // Fallback to refs if ids arrays are missing (backward compatibility)
+            const artistIds = recording.artistIds || recording.artistRefs?.map(ref => ref.id) || [];
+            setSelectedArtistIds(artistIds);
 
-                        // Fallback to refs if ids arrays are missing (backward compatibility)
-                        const artistIds = recording.artistIds || recording.artistRefs?.map(ref => ref.id) || [];
-                        setSelectedArtistIds(artistIds);
+            const composerIds = recording.composerIds || recording.composerRefs?.map(ref => ref.id) || [];
+            setSelectedComposerIds(composerIds);
 
-                        const composerIds = recording.composerIds || recording.composerRefs?.map(ref => ref.id) || [];
-                        setSelectedComposerIds(composerIds);
-
-                        const lyricistIds = recording.lyricistIds || recording.lyricistRefs?.map(ref => ref.id) || [];
-                        setSelectedLyricistIds(lyricistIds);
-                    } else {
-                        console.error("Recording not found");
-                        router.push('/admin/recordings');
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [isNew, id, router]);
+            const lyricistIds = recording.lyricistIds || recording.lyricistRefs?.map(ref => ref.id) || [];
+            setSelectedLyricistIds(lyricistIds);
+        }
+    }, [recording]);
 
     const createNewPerson = async (name: string): Promise<string> => {
         try {
@@ -93,12 +84,7 @@ export default function RecordingEditorPage() {
                 dateUpdated: Timestamp.now(),
             };
 
-            const newId = await addDocument('people', newPersonData);
-
-            // Refresh people list
-            const updatedPeople = await getCollection('people');
-            setPeople(updatedPeople as (Person & { id: string })[]);
-
+            const newId = await addPersonMutation.mutateAsync(newPersonData);
             return newId;
         } catch (error) {
             console.error('Error creating new person:', error);
@@ -124,11 +110,7 @@ export default function RecordingEditorPage() {
                 dateUpdated: Timestamp.now(),
             };
 
-            const newId = await addDocument('theatres', newTheatreData);
-
-            // Refresh theatres list
-            const updatedTheatres = await getCollection('theatres');
-            setTheatres(updatedTheatres as (Theatre & { id: string })[]);
+            const newId = await addTheatreMutation.mutateAsync(newTheatreData);
 
             if (theatreCreateResolve) {
                 theatreCreateResolve(newId);
@@ -191,10 +173,10 @@ export default function RecordingEditorPage() {
             };
 
             if (!isNew) {
-                await updateDocument('recordings', id, recordingData);
+                await updateRecordingMutation.mutateAsync({ id, data: recordingData });
             } else {
                 recordingData.dateAdded = Timestamp.now();
-                await addDocument('recordings', recordingData);
+                await addRecordingMutation.mutateAsync(recordingData);
             }
 
             router.push('/admin/recordings');
@@ -214,7 +196,7 @@ export default function RecordingEditorPage() {
         label: p.name
     }));
 
-    if (loading) return <div className="p-8">Loading...</div>;
+    if (recordingLoading || theatresLoading || peopleLoading) return <div className="p-8">Loading...</div>;
 
     return (
         <div className="max-w-3xl mx-auto pb-12">

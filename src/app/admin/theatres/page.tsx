@@ -1,35 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCollection, deleteDocument } from '@/firebase/firestore';
-import { Theatre } from '@/types';
+import { useTheatres, useDeleteTheatre } from '@/hooks/useQueries';
 import Link from 'next/link';
 
 export default function TheatresPage() {
-    const [theatres, setTheatres] = useState<(Theatre & { id: string })[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchTheatres();
-    }, []);
-
-    const fetchTheatres = async () => {
-        setLoading(true);
-        try {
-            const data = await getCollection('theatres');
-            setTheatres(data as (Theatre & { id: string })[]);
-        } catch (error) {
-            console.error("Error fetching theatres:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: theatres = [], isLoading: loading } = useTheatres();
+    const deleteTheatreMutation = useDeleteTheatre();
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this theatre?')) return;
         try {
-            await deleteDocument('theatres', id);
-            fetchTheatres();
+            await deleteTheatreMutation.mutateAsync(id);
         } catch (error) {
             console.error("Error deleting theatre:", error);
         }

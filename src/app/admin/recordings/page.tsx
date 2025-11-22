@@ -1,35 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCollection, deleteDocument } from '@/firebase/firestore';
-import { Recording } from '@/types';
+import { useRecordings, useDeleteRecording } from '@/hooks/useQueries';
 import Link from 'next/link';
 
 export default function RecordingsPage() {
-    const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const recs = await getCollection('recordings');
-            setRecordings(recs as (Recording & { id: string })[]);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: recordings = [], isLoading: loading } = useRecordings();
+    const deleteRecordingMutation = useDeleteRecording();
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this recording?')) return;
         try {
-            await deleteDocument('recordings', id);
-            fetchData();
+            await deleteRecordingMutation.mutateAsync(id);
         } catch (error) {
             console.error("Error deleting recording:", error);
         }
