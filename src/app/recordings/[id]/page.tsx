@@ -6,6 +6,7 @@ import { getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import SearchPill from '@/components/ui/SearchPill';
+import ImageCarousel from '@/components/ui/ImageCarousel';
 import { useRecording } from '@/hooks/useQueries';
 
 export default function RecordingDetailsPage() {
@@ -95,9 +96,32 @@ export default function RecordingDetailsPage() {
                                         <p className="text-gray-600 text-sm whitespace-pre-wrap">{recording.info}</p>
                                     </div>
                                 )}
+                                {recording.oneDriveLink && (
+                                    <div className="mt-4">
+                                        <a
+                                            href={recording.oneDriveLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                            </svg>
+                                            Go to OneDrive
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Image Gallery Carousel */}
+                    {recording.galleryImages && recording.galleryImages.length > 0 && (
+                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Gallery</h2>
+                            <ImageCarousel images={recording.galleryImages} />
+                        </div>
+                    )}
 
                     {/* Theatre Card */}
                     <div className="bg-white rounded-lg shadow-sm border p-6">

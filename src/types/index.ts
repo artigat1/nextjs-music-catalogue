@@ -36,6 +36,8 @@ export interface Recording {
     composerRefs: DocumentReference[];
     composerIds: string[]; // added to store full list of composer IDs
     lyricistIds: string[]; // added to store full list of lyricist IDs
+    oneDriveLink?: string; // optional OneDrive shared link
+    galleryImages?: string[]; // optional array of image URLs for carousel
 }
 
 

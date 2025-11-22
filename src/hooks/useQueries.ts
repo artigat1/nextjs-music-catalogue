@@ -117,8 +117,23 @@ export function useAddPerson() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('people', data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.people] });
+        onSuccess: async (newId, variables) => {
+            // Optimistically update the cache with the new person
+            queryClient.setQueryData<(Person & { id: string })[]>(
+                [QUERY_KEYS.people],
+                (old = []) => [
+                    ...old,
+                    {
+                        id: newId,
+                        name: (variables as any).name,
+                        info: (variables as any).info || '',
+                        dateAdded: (variables as any).dateAdded,
+                        dateUpdated: (variables as any).dateUpdated,
+                    } as Person & { id: string }
+                ]
+            );
+            // Also refetch to ensure consistency
+            await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.people] });
         },
     });
 }
@@ -127,8 +142,8 @@ export function useAddTheatre() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('theatres', data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.theatres] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.theatres] });
         },
     });
 }

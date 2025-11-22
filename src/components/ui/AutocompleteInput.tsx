@@ -83,10 +83,20 @@ export default function AutocompleteInput({
                     .map(name => name.trim())
                     .filter(name => name.length > 0);
 
+                // Track created names to avoid duplicates within this paste operation
+                const createdNames = new Set<string>();
+
                 for (const name of names) {
-                    // Check if person already exists
+                    const lowerName = name.toLowerCase();
+
+                    // Skip if we already created this name in this paste operation
+                    if (createdNames.has(lowerName)) {
+                        continue;
+                    }
+
+                    // Check if person already exists in options
                     const existing = options.find(
-                        opt => opt.label.toLowerCase() === name.toLowerCase()
+                        opt => opt.label.toLowerCase() === lowerName
                     );
 
                     if (existing) {
@@ -98,6 +108,7 @@ export default function AutocompleteInput({
                         // Create new person
                         const newId = await onCreateNew(name);
                         onSelect(newId);
+                        createdNames.add(lowerName);
                     }
                 }
 
