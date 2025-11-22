@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Person, Theatre } from '@/types';
-import { getDoc } from 'firebase/firestore';
+import { getDoc, DocumentReference } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import SearchPill from '@/components/ui/SearchPill';
@@ -34,7 +34,7 @@ export default function RecordingDetailsPage() {
                 }
 
                 // Fetch People
-                const fetchPeople = async (refs: import('firebase/firestore').DocumentReference[]) => {
+                const fetchPeople = async (refs: DocumentReference[]) => {
                     if (!refs || refs.length === 0) return [];
                     const promises = refs.map(ref => getDoc(ref));
                     const snaps = await Promise.all(promises);

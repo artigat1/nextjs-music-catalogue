@@ -1,5 +1,5 @@
 import { Recording, Theatre, Person } from '@/types';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, DocumentReference } from 'firebase/firestore';
 
 export const mockTheatre: Theatre & { id: string } = {
     id: 'theatre-1',
@@ -27,7 +27,7 @@ export const mockRecording: Recording & { id: string } = {
     recordingDate: Timestamp.fromDate(new Date('2023-05-15')),
     dateAdded: Timestamp.now(),
     dateUpdated: Timestamp.now(),
-    theatreRef: {} as unknown as import('firebase/firestore').DocumentReference,
+    theatreRef: {} as unknown as DocumentReference,
     theatreName: 'Royal Opera House',
     city: 'London',
     artistRefs: [],
