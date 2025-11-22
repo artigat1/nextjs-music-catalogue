@@ -84,7 +84,7 @@ export default function RecordingDetailsPage() {
                         <div className="md:flex">
                             <div className="md:flex-shrink-0 md:w-48 bg-gray-200">
                                 {recording.imageUrl ? (
-                                    <img className="h-48 w-full object-cover md:h-full md:w-48" src={recording.imageUrl} alt={recording.title} />
+                                    <img className="h-48 w-full object-contain md:h-full md:w-48 bg-gray-200" src={recording.imageUrl} alt={recording.title} />
                                 ) : (
                                     <div className="h-48 w-full flex items-center justify-center text-gray-400">No Image</div>
                                 )}
@@ -99,6 +99,12 @@ export default function RecordingDetailsPage() {
                                         day: 'numeric'
                                     })}
                                 </p>
+                                {recording.info && (
+                                    <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Notes</h3>
+                                        <p className="text-gray-600 text-sm whitespace-pre-wrap">{recording.info}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

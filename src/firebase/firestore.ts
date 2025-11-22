@@ -31,7 +31,8 @@ export const getCollection = async (collectionName: string) => {
 };
 
 export const addDocument = async <T extends WithFieldValue<DocumentData>>(collectionName: string, data: T) => {
-    return await addDoc(collection(db, collectionName), data);
+    const docRef = await addDoc(collection(db, collectionName), data);
+    return docRef.id;
 };
 
 export const updateDocument = async <T extends DocumentData>(collectionName: string, id: string, data: UpdateData<T>) => {

@@ -15,22 +15,32 @@ export default function Navbar() {
                         <Link href="/" className="flex-shrink-0 flex items-center" title="Steve's Music Catalogue">
                             <img src="/logo.png" alt="Steve's Music Catalogue" className="w-48 h-auto object-contain hover:scale-105 transition-transform duration-200" />
                         </Link>
-                        <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                            <Link
-                                href="/"
-                                className="border-transparent text-white/70 hover:border-accent hover:text-accent inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors"
-                            >
-                                Home
-                            </Link>
-                            <Link
-                                href="/search"
-                                className="border-transparent text-white/70 hover:border-accent hover:text-accent inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors"
-                            >
-                                Search
-                            </Link>
-                        </div>
+
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-4">
+                        {user && (
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                const form = e.target as HTMLFormElement;
+                                const input = form.elements.namedItem('search') as HTMLInputElement;
+                                if (input.value.trim()) {
+                                    window.location.href = `/search?q=${encodeURIComponent(input.value.trim())}`;
+                                }
+                            }} className="relative hidden md:block">
+                                <input
+                                    type="text"
+                                    name="search"
+                                    placeholder="Search..."
+                                    className="bg-gray-900 text-white text-sm rounded-full pl-4 pr-10 py-1.5 border border-gray-700 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent w-64 transition-all"
+                                />
+                                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
+                            </form>
+                        )}
+
                         {user ? (
                             <div className="flex items-center gap-4">
                                 {(user.role === 'admin' || user.role === 'editor') && (
@@ -41,7 +51,7 @@ export default function Navbar() {
                                         Admin
                                     </Link>
                                 )}
-                                <span className="text-sm text-white/80 font-medium">
+                                <span className="text-sm text-white/80 font-medium hidden sm:inline-block">
                                     {user.displayName}
                                 </span>
                                 <button

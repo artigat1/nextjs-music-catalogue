@@ -4,17 +4,23 @@ import { useState, useEffect } from 'react';
 import { getCollection } from '@/firebase/firestore';
 import { Recording } from '@/types';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 export default function SearchPage() {
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
-    const queryParam = searchParams.get('q') || '';
+
+    const initialQuery = searchParams.get('q') || '';
+    const initialType = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
 
     const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
     const [filteredRecordings, setFilteredRecordings] = useState<(Recording & { id: string })[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(queryParam);
-    const [searchType, setSearchType] = useState<'all' | 'title' | 'artist' | 'theatre'>('all');
+
+    // Initialize state from URL
+    const [searchTerm, setSearchTerm] = useState(initialQuery);
+    const [searchType, setSearchType] = useState<'all' | 'title' | 'artist' | 'theatre'>(initialType);
 
     useEffect(() => {
         // For this demo/playground, we'll fetch all and filter client-side.
@@ -34,10 +40,46 @@ export default function SearchPage() {
         fetchAllRecordings();
     }, []);
 
-    // Update search term when query param changes
+    // Sync URL with State (Debounced)
     useEffect(() => {
-        setSearchTerm(queryParam);
-    }, [queryParam]);
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(searchParams.toString());
+
+            if (searchTerm) {
+                params.set('q', searchTerm);
+            } else {
+                params.delete('q');
+            }
+
+            if (searchType !== 'all') {
+                params.set('type', searchType);
+            } else {
+                params.delete('type');
+            }
+
+            const newQuery = params.toString();
+            const currentQuery = searchParams.toString();
+
+            if (newQuery !== currentQuery) {
+                router.replace(`${pathname}?${newQuery}`, { scroll: false });
+            }
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(timer);
+    }, [searchTerm, searchType, pathname, router, searchParams]);
+
+    // Sync State with URL (Handle Back/Forward navigation)
+    useEffect(() => {
+        const query = searchParams.get('q') || '';
+        const type = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
+
+        if (query !== searchTerm) {
+            setSearchTerm(query);
+        }
+        if (type !== searchType) {
+            setSearchType(type);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (!searchTerm) {

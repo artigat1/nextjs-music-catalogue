@@ -7,7 +7,17 @@ import Link from 'next/link';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 
+import AuthGuard from '@/components/auth/AuthGuard';
+
 export default function Home() {
+  return (
+    <AuthGuard>
+      <HomeContent />
+    </AuthGuard>
+  );
+}
+
+function HomeContent() {
   const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,15 +73,12 @@ export default function Home() {
               </div>
               <div className="p-4 flex-1 flex flex-col">
                 <h3 className="text-lg font-bold text-primary mb-1 font-serif">{recording.title}</h3>
-                <p className="text-sm text-foreground/70 mb-2">{recording.theatreName}, {recording.city}</p>
-                <div className="mt-auto pt-4 border-t border-accent/10">
-                  <p className="text-sm text-foreground/60">Released: {recording.releaseYear}</p>
-                  {recording.artistNames && recording.artistNames.length > 0 && (
-                    <p className="text-sm text-foreground/80 mt-2 truncate font-medium">
-                      {recording.artistNames.join(', ')}
-                    </p>
-                  )}
-                </div>
+                <p className="text-sm text-foreground/70 mb-1">{recording.theatreName}, {recording.city}</p>
+                <p className="text-sm text-foreground/60">
+                  {recording.recordingDate
+                    ? recording.recordingDate.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+                    : recording.releaseYear}
+                </p>
               </div>
             </div>
           </Link>

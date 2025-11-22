@@ -20,8 +20,8 @@ export interface Person {
 export interface Recording {
     id?: string;
     title: string;
-    recordingUrl: string;
     imageUrl: string;
+    info: string;
     releaseYear: number;
     recordingDate: Timestamp;
     dateAdded: Timestamp;
@@ -31,9 +31,13 @@ export interface Recording {
     city: string;
     artistRefs: DocumentReference[];
     artistNames: string[];
+    artistIds: string[]; // added to store full list of artist IDs
     lyricistRefs: DocumentReference[];
     composerRefs: DocumentReference[];
+    composerIds: string[]; // added to store full list of composer IDs
+    lyricistIds: string[]; // added to store full list of lyricist IDs
 }
+
 
 export interface UserData {
     email: string;
