@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthChange } from '@/firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
-import { User } from 'firebase/auth';
 
 export interface AppUser {
     uid: string;

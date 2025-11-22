@@ -27,7 +27,7 @@ export const mockRecording: Recording & { id: string } = {
     recordingDate: Timestamp.fromDate(new Date('2023-05-15')),
     dateAdded: Timestamp.now(),
     dateUpdated: Timestamp.now(),
-    theatreRef: {} as any,
+    theatreRef: {} as unknown as import('firebase/firestore').DocumentReference,
     theatreName: 'Royal Opera House',
     city: 'London',
     artistRefs: [],

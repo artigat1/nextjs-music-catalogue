@@ -7,8 +7,6 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    query,
-    where,
     DocumentData,
     WithFieldValue,
     UpdateData

@@ -34,13 +34,13 @@ export default function RecordingDetailsPage() {
                 }
 
                 // Fetch People
-                const fetchPeople = async (refs: any[]) => {
+                const fetchPeople = async (refs: import('firebase/firestore').DocumentReference[]) => {
                     if (!refs || refs.length === 0) return [];
                     const promises = refs.map(ref => getDoc(ref));
                     const snaps = await Promise.all(promises);
                     return snaps.map(snap => {
                         const data = snap.data();
-                        return { id: snap.id, ...(data as any) } as Person & { id: string };
+                        return { id: snap.id, ...data } as Person & { id: string };
                     });
                 };
 

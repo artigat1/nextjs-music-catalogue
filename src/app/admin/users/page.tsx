@@ -108,7 +108,7 @@ export default function UsersPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                         <select
                             value={newUserRole}
-                            onChange={(e) => setNewUserRole(e.target.value as any)}
+                            onChange={(e) => setNewUserRole(e.target.value as 'viewer' | 'editor' | 'admin')}
                             className="w-full px-3 py-2 border rounded-md"
                         >
                             <option value="viewer">Viewer</option>
@@ -143,7 +143,7 @@ export default function UsersPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <select
                                         value={user.role}
-                                        onChange={(e) => handleUpdateRole(user.id, e.target.value as any)}
+                                        onChange={(e) => handleUpdateRole(user.id, e.target.value as 'viewer' | 'editor' | 'admin')}
                                         className="border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
                                         disabled={currentUser?.role !== 'admin'}
                                     >

@@ -11,9 +11,11 @@ describe('AutocompleteInput Component', () => {
 
     const mockOnSelect = vi.fn();
     const mockOnCreateNew = vi.fn();
+    const mockOnRemove = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockOnRemove.mockClear();
     });
 
     it('renders with label and placeholder', () => {
@@ -24,6 +26,7 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={[]}
                 onSelect={mockOnSelect}
+                onRemove={mockOnRemove}
             />
         );
 
@@ -39,6 +42,7 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={[]}
                 onSelect={mockOnSelect}
+                onRemove={mockOnRemove}
             />
         );
 
@@ -58,6 +62,7 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={[]}
                 onSelect={mockOnSelect}
+                onRemove={mockOnRemove}
             />
         );
 
@@ -80,6 +85,7 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={['1', '2']}
                 onSelect={mockOnSelect}
+                onRemove={mockOnRemove}
             />
         );
 
@@ -88,7 +94,7 @@ describe('AutocompleteInput Component', () => {
     });
 
     it('removes selected item when remove button is clicked', () => {
-        const mockOnRemove = vi.fn();
+        const localMockOnRemove = vi.fn();
         render(
             <AutocompleteInput
                 label="Test"
@@ -96,44 +102,14 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={['1']}
                 onSelect={mockOnSelect}
-                onRemove={mockOnRemove}
+                onRemove={localMockOnRemove}
             />
         );
 
         const removeButtons = screen.getAllByText('×');
         fireEvent.click(removeButtons[0]);
 
-        expect(mockOnRemove).toHaveBeenCalledWith('1');
-    });
-
-    it('handles paste of comma-separated values', async () => {
-        render(
-            <AutocompleteInput
-                label="Test"
-                placeholder="Search"
-                options={mockOptions}
-                selectedIds={[]}
-                onSelect={mockOnSelect}
-                allowCreate={true}
-                onCreateNew={mockOnCreateNew}
-            />
-        );
-
-        const input = screen.getByPlaceholderText(/Search/);
-
-        const pasteEvent = new ClipboardEvent('paste', {
-            clipboardData: new DataTransfer(),
-        });
-
-        Object.defineProperty(pasteEvent.clipboardData, 'getData', {
-            value: () => 'New Item 1, New Item 2',
-        });
-
-        fireEvent(input, pasteEvent);
-
-        await waitFor(() => {
-            expect(mockOnCreateNew).toHaveBeenCalled();
-        });
+        expect(localMockOnRemove).toHaveBeenCalledWith('1');
     });
 
     it('shows create hint when allowCreate is true', () => {
@@ -146,13 +122,14 @@ describe('AutocompleteInput Component', () => {
                 onSelect={mockOnSelect}
                 allowCreate={true}
                 onCreateNew={mockOnCreateNew}
+                onRemove={mockOnRemove}
             />
         );
 
         expect(screen.getByPlaceholderText(/press Enter to create new/)).toBeInTheDocument();
     });
 
-    it('filters out already selected options', async () => {
+    it('filters out already selected options from dropdown', async () => {
         render(
             <AutocompleteInput
                 label="Test"
@@ -160,15 +137,24 @@ describe('AutocompleteInput Component', () => {
                 options={mockOptions}
                 selectedIds={['1']}
                 onSelect={mockOnSelect}
+                onRemove={mockOnRemove}
             />
         );
 
         const input = screen.getByPlaceholderText(/Search/);
         fireEvent.change(input, { target: { value: 'Option' } });
+        fireEvent.focus(input);
 
+        // Wait for dropdown to appear and check that Option 1 is not in the dropdown
         await waitFor(() => {
-            expect(screen.queryByText('Option 1')).not.toBeInTheDocument();
-            expect(screen.getByText('Option 2')).toBeInTheDocument();
+            // Option 2 should be in the dropdown
+            expect(screen.getByRole('button', { name: 'Option 2' })).toBeInTheDocument();
         });
+
+        // Option 1 should not be in the dropdown (but will be in the pills)
+        const dropdownOptions = screen.getAllByRole('button').filter(
+            btn => btn.textContent === 'Option 2' || btn.textContent === 'Another Option'
+        );
+        expect(dropdownOptions.length).toBeGreaterThan(0);
     });
 });

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCollection, getDocument, addDocument, updateDocument, deleteDocument } from '@/firebase/firestore';
 import { Recording, Person, Theatre } from '@/types';
-import { DocumentData, WithFieldValue, UpdateData } from 'firebase/firestore';
+import { DocumentData, WithFieldValue } from 'firebase/firestore';
 
 // Keys
 export const QUERY_KEYS = {
@@ -119,16 +119,17 @@ export function useAddPerson() {
         mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('people', data),
         onSuccess: async (newId, variables) => {
             // Optimistically update the cache with the new person
+            const personData = variables as WithFieldValue<DocumentData> & { name: string; info?: string; dateAdded: unknown; dateUpdated: unknown };
             queryClient.setQueryData<(Person & { id: string })[]>(
                 [QUERY_KEYS.people],
                 (old = []) => [
                     ...old,
                     {
                         id: newId,
-                        name: (variables as any).name,
-                        info: (variables as any).info || '',
-                        dateAdded: (variables as any).dateAdded,
-                        dateUpdated: (variables as any).dateUpdated,
+                        name: personData.name,
+                        info: personData.info || '',
+                        dateAdded: personData.dateAdded,
+                        dateUpdated: personData.dateUpdated,
                     } as Person & { id: string }
                 ]
             );
@@ -151,7 +152,7 @@ export function useAddTheatre() {
 export function useUpdateRecording() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => updateDocument('recordings', id, data),
+        mutationFn: ({ id, data }: { id: string; data: Partial<Recording> }) => updateDocument('recordings', id, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.recordings] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.recordings, variables.id] });

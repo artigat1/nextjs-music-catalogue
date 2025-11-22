@@ -7,10 +7,18 @@ afterEach(() => {
     cleanup();
 });
 
-// Mock Firebase
+// Mock Firebase Auth
+vi.mock('@/firebase/auth', () => ({
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    onAuthChange: vi.fn(() => vi.fn()), // Returns unsubscribe function
+}));
+
+// Mock Firebase Config
 vi.mock('@/firebase/config', () => ({
     db: {},
     auth: {},
+    firebaseConfig: {},
 }));
 
 // Mock Next.js router

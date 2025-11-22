@@ -101,7 +101,7 @@ function SearchContent() {
                         <label className="block text-sm font-medium text-foreground/80 mb-1">Search By</label>
                         <select
                             value={searchType}
-                            onChange={(e) => setSearchType(e.target.value as any)}
+                            onChange={(e) => setSearchType(e.target.value as 'all' | 'title' | 'artist' | 'theatre')}
                             className="w-full px-4 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
                         >
                             <option value="all">All Fields</option>

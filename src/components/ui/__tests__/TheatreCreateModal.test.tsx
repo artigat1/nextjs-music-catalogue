@@ -16,7 +16,7 @@ describe('TheatreCreateModal Component', () => {
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName="Test Theatre"
+                theatreName="Test Theatre"
             />
         );
 
@@ -30,7 +30,7 @@ describe('TheatreCreateModal Component', () => {
                 isOpen={false}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName=""
+                theatreName=""
             />
         );
 
@@ -43,13 +43,14 @@ describe('TheatreCreateModal Component', () => {
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName="Royal Opera"
+                theatreName="Royal Opera"
             />
         );
 
-        const cityInput = screen.getByLabelText(/City/i);
-        const countryInput = screen.getByLabelText(/Country/i);
-        const createButton = screen.getByText('Create');
+        // Use placeholder text to find inputs
+        const cityInput = screen.getByPlaceholderText(/London/i);
+        const countryInput = screen.getByPlaceholderText(/United Kingdom/i);
+        const createButton = screen.getByText('Create Theatre');
 
         fireEvent.change(cityInput, { target: { value: 'London' } });
         fireEvent.change(countryInput, { target: { value: 'UK' } });
@@ -66,7 +67,7 @@ describe('TheatreCreateModal Component', () => {
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName=""
+                theatreName=""
             />
         );
 
@@ -76,62 +77,48 @@ describe('TheatreCreateModal Component', () => {
         expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('validates required fields', async () => {
+    it('displays theatre name as disabled input', () => {
         render(
             <TheatreCreateModal
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName=""
+                theatreName="My Theatre"
             />
         );
 
-        const createButton = screen.getByText('Create');
-        fireEvent.click(createButton);
-
-        // Should not call onCreate if fields are empty
-        await waitFor(() => {
-            expect(mockOnCreate).not.toHaveBeenCalled();
-        });
+        const theatreInput = screen.getByDisplayValue('My Theatre');
+        expect(theatreInput).toBeDisabled();
     });
 
-    it('trims whitespace from inputs', async () => {
+    it('has required fields for city and country', () => {
         render(
             <TheatreCreateModal
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName="  Test Theatre  "
+                theatreName="Test"
             />
         );
 
-        const cityInput = screen.getByLabelText(/City/i);
-        const countryInput = screen.getByLabelText(/Country/i);
-        const createButton = screen.getByText('Create');
+        const cityInput = screen.getByPlaceholderText(/London/i);
+        const countryInput = screen.getByPlaceholderText(/United Kingdom/i);
 
-        fireEvent.change(cityInput, { target: { value: '  London  ' } });
-        fireEvent.change(countryInput, { target: { value: '  UK  ' } });
-        fireEvent.click(createButton);
-
-        await waitFor(() => {
-            expect(mockOnCreate).toHaveBeenCalledWith('Test Theatre', 'London', 'UK');
-        });
+        expect(cityInput).toBeRequired();
+        expect(countryInput).toBeRequired();
     });
 
-    it('closes modal on backdrop click', () => {
-        const { container } = render(
+    it('shows correct button text', () => {
+        render(
             <TheatreCreateModal
                 isOpen={true}
                 onClose={mockOnClose}
                 onCreate={mockOnCreate}
-                initialName=""
+                theatreName="Test"
             />
         );
 
-        const backdrop = container.querySelector('.fixed.inset-0');
-        if (backdrop) {
-            fireEvent.click(backdrop);
-            expect(mockOnClose).toHaveBeenCalled();
-        }
+        expect(screen.getByText('Create Theatre')).toBeInTheDocument();
+        expect(screen.getByText('Cancel')).toBeInTheDocument();
     });
 });

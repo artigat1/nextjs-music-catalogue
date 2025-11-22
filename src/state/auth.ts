@@ -1,5 +1,4 @@
 import { atom } from 'recoil';
-import { User } from 'firebase/auth';
 
 export interface AppUser {
     uid: string;

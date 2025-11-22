@@ -97,7 +97,7 @@ export default function RecordingEditorPage() {
     };
 
     const createNewTheatre = async (name: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             setPendingTheatreName(name);
             setTheatreCreateResolve(() => resolve);
             setIsTheatreModalOpen(true);
