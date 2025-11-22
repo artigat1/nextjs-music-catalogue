@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCollection } from '@/firebase/firestore';
-import { Recording } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useRecordings } from '@/hooks/useQueries';
 
 export default function SearchPage() {
     const router = useRouter();
@@ -14,31 +13,11 @@ export default function SearchPage() {
     const initialQuery = searchParams.get('q') || '';
     const initialType = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
 
-    const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
-    const [filteredRecordings, setFilteredRecordings] = useState<(Recording & { id: string })[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: recordings = [], isLoading: loading } = useRecordings();
 
     // Initialize state from URL
     const [searchTerm, setSearchTerm] = useState(initialQuery);
     const [searchType, setSearchType] = useState<'all' | 'title' | 'artist' | 'theatre'>(initialType);
-
-    useEffect(() => {
-        // For this demo/playground, we'll fetch all and filter client-side.
-        // In a real app with large data, we'd use Algolia or specific Firestore queries.
-        const fetchAllRecordings = async () => {
-            try {
-                const data = await getCollection('recordings');
-                setRecordings(data as (Recording & { id: string })[]);
-                setFilteredRecordings(data as (Recording & { id: string })[]);
-            } catch (error) {
-                console.error("Error fetching recordings:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllRecordings();
-    }, []);
 
     // Sync URL with State (Debounced)
     useEffect(() => {
@@ -81,14 +60,14 @@ export default function SearchPage() {
         }
     }, [searchParams]);
 
-    useEffect(() => {
+    // Filter recordings using useMemo
+    const filteredRecordings = useMemo(() => {
         if (!searchTerm) {
-            setFilteredRecordings(recordings);
-            return;
+            return recordings;
         }
 
         const lowerTerm = searchTerm.toLowerCase();
-        const filtered = recordings.filter(rec => {
+        return recordings.filter(rec => {
             const matchTitle = rec.title.toLowerCase().includes(lowerTerm);
             const matchTheatre = rec.theatreName?.toLowerCase().includes(lowerTerm) || rec.city?.toLowerCase().includes(lowerTerm);
             const matchArtist = rec.artistNames?.some(name => name.toLowerCase().includes(lowerTerm));
@@ -100,8 +79,6 @@ export default function SearchPage() {
             // 'all'
             return matchTitle || matchTheatre || matchArtist;
         });
-
-        setFilteredRecordings(filtered);
     }, [searchTerm, searchType, recordings]);
 
     return (

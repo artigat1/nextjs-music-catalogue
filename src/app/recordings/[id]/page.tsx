@@ -1,42 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDocument } from '@/firebase/firestore';
-import { Recording, Theatre, Person } from '@/types';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { Person, Theatre } from '@/types';
+import { getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import SearchPill from '@/components/ui/SearchPill';
+import { useRecording } from '@/hooks/useQueries';
 
 export default function RecordingDetailsPage() {
     const params = useParams();
     const id = params.id as string;
 
-    const [recording, setRecording] = useState<(Recording & { id: string }) | null>(null);
+    const { data: recording, isLoading: loading } = useRecording(id);
+
     const [theatre, setTheatre] = useState<(Theatre & { id: string }) | null>(null);
     const [artists, setArtists] = useState<(Person & { id: string })[]>([]);
     const [composers, setComposers] = useState<(Person & { id: string })[]>([]);
     const [lyricists, setLyricists] = useState<(Person & { id: string })[]>([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (id) {
-            fetchRecordingDetails();
-        }
-    }, [id]);
+        if (!recording) return;
 
-    const fetchRecordingDetails = async () => {
-        setLoading(true);
-        try {
-            const recData = await getDocument('recordings', id);
-            if (recData) {
-                const rec = recData as Recording & { id: string };
-                setRecording(rec);
-
+        const fetchRelatedData = async () => {
+            try {
                 // Fetch Theatre
-                if (rec.theatreRef) {
-                    const theatreSnap = await getDoc(rec.theatreRef);
+                if (recording.theatreRef) {
+                    const theatreSnap = await getDoc(recording.theatreRef);
                     if (theatreSnap.exists()) {
                         setTheatre({ id: theatreSnap.id, ...theatreSnap.data() } as Theatre & { id: string });
                     }
@@ -54,21 +44,21 @@ export default function RecordingDetailsPage() {
                 };
 
                 const [fetchedArtists, fetchedComposers, fetchedLyricists] = await Promise.all([
-                    fetchPeople(rec.artistRefs),
-                    fetchPeople(rec.composerRefs),
-                    fetchPeople(rec.lyricistRefs)
+                    fetchPeople(recording.artistRefs),
+                    fetchPeople(recording.composerRefs),
+                    fetchPeople(recording.lyricistRefs)
                 ]);
 
                 setArtists(fetchedArtists);
                 setComposers(fetchedComposers);
                 setLyricists(fetchedLyricists);
+            } catch (error) {
+                console.error("Error fetching related data:", error);
             }
-        } catch (error) {
-            console.error("Error fetching recording details:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        fetchRelatedData();
+    }, [recording]);
 
     if (loading) return <div className="p-8 text-center">Loading details...</div>;
     if (!recording) return <div className="p-8 text-center">Recording not found.</div>;

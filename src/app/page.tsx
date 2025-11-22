@@ -1,13 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCollection } from '@/firebase/firestore';
-import { Recording } from '@/types';
 import Link from 'next/link';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-
 import AuthGuard from '@/components/auth/AuthGuard';
+import { useRecordings } from '@/hooks/useQueries';
+import { useMemo } from 'react';
 
 export default function Home() {
   return (
@@ -18,29 +14,18 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const [recordings, setRecordings] = useState<(Recording & { id: string })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: allRecordings = [], isLoading: loading } = useRecordings();
 
-  useEffect(() => {
-    const fetchLatestRecordings = async () => {
-      try {
-        const q = query(
-          collection(db, 'recordings'),
-          orderBy('recordingDate', 'desc'),
-          limit(10)
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (Recording & { id: string })[];
-        setRecordings(data);
-      } catch (error) {
-        console.error("Error fetching recordings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLatestRecordings();
-  }, []);
+  // Get latest 10 recordings sorted by date
+  const recordings = useMemo(() => {
+    return [...allRecordings]
+      .sort((a, b) => {
+        const dateA = a.recordingDate?.toDate().getTime() || 0;
+        const dateB = b.recordingDate?.toDate().getTime() || 0;
+        return dateB - dateA;
+      })
+      .slice(0, 10);
+  }, [allRecordings]);
 
   if (loading) {
     return (
