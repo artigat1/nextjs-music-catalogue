@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useRecordings } from '@/hooks/useQueries';
 
@@ -58,6 +59,7 @@ function SearchContent() {
         if (type !== searchType) {
             setSearchType(type);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
     // Filter recordings using useMemo
@@ -122,10 +124,12 @@ function SearchContent() {
                             <div className="bg-surface rounded-lg shadow-sm overflow-hidden border border-transparent transition-all hover:shadow-md hover:border-accent/50 h-full flex flex-col">
                                 <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-surface/50 h-48 relative border-b border-accent/10">
                                     {recording.imageUrl ? (
-                                        <img
+                                        <Image
                                             src={recording.imageUrl}
                                             alt={recording.title}
-                                            className="w-full h-full object-cover object-center group-hover:opacity-90 transition-opacity"
+                                            fill
+                                            unoptimized
+                                            className="object-cover object-center group-hover:opacity-90 transition-opacity"
                                         />
                                     ) : (
                                         <div className="flex items-center justify-center h-full text-foreground/40">

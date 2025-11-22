@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { signInWithGoogle } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -33,9 +34,11 @@ export default function LoginPage() {
                     onClick={handleGoogleLogin}
                     className="w-full flex items-center justify-center gap-3 bg-white border border-accent/30 text-foreground hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition duration-200 shadow-sm hover:shadow-md"
                 >
-                    <img
+                    <Image
                         src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                         alt="Google logo"
+                        width={24}
+                        height={24}
                         className="w-6 h-6"
                     />
                     Sign in with Google

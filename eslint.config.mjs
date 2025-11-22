@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Custom ignores:
+    ".firebase/**",
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
   ]),
 ]);
 

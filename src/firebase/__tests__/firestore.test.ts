@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as firestoreModule from '@/firebase/firestore';
-import { Timestamp } from 'firebase/firestore';
 
 // Mock Firebase
 vi.mock('@/firebase/config', () => ({
@@ -43,7 +42,7 @@ describe('Firestore Helper Functions', () => {
             };
 
             const { getDocs } = await import('firebase/firestore');
-            vi.mocked(getDocs).mockResolvedValue(mockSnapshot as any);
+            vi.mocked(getDocs).mockResolvedValue(mockSnapshot as unknown as import('firebase/firestore').QuerySnapshot<import('firebase/firestore').DocumentData>);
 
             const result = await firestoreModule.getCollection('test-collection');
 
@@ -58,7 +57,7 @@ describe('Firestore Helper Functions', () => {
             };
 
             const { getDocs } = await import('firebase/firestore');
-            vi.mocked(getDocs).mockResolvedValue(mockSnapshot as any);
+            vi.mocked(getDocs).mockResolvedValue(mockSnapshot as unknown as import('firebase/firestore').QuerySnapshot<import('firebase/firestore').DocumentData>);
 
             const result = await firestoreModule.getCollection('empty-collection');
 
@@ -75,7 +74,7 @@ describe('Firestore Helper Functions', () => {
             };
 
             const { getDoc } = await import('firebase/firestore');
-            vi.mocked(getDoc).mockResolvedValue(mockDoc as any);
+            vi.mocked(getDoc).mockResolvedValue(mockDoc as unknown as import('firebase/firestore').DocumentSnapshot<import('firebase/firestore').DocumentData>);
 
             const result = await firestoreModule.getDocument('test-collection', 'doc-1');
 
@@ -89,7 +88,7 @@ describe('Firestore Helper Functions', () => {
             };
 
             const { getDoc } = await import('firebase/firestore');
-            vi.mocked(getDoc).mockResolvedValue(mockDoc as any);
+            vi.mocked(getDoc).mockResolvedValue(mockDoc as unknown as import('firebase/firestore').DocumentSnapshot<import('firebase/firestore').DocumentData>);
 
             const result = await firestoreModule.getDocument('test-collection', 'non-existent');
 
@@ -102,7 +101,7 @@ describe('Firestore Helper Functions', () => {
             const mockDocRef = { id: 'new-doc-id' };
 
             const { addDoc } = await import('firebase/firestore');
-            vi.mocked(addDoc).mockResolvedValue(mockDocRef as any);
+            vi.mocked(addDoc).mockResolvedValue(mockDocRef as unknown as import('firebase/firestore').DocumentReference<import('firebase/firestore').DocumentData>);
 
             const result = await firestoreModule.addDocument('test-collection', {
                 name: 'New Document',

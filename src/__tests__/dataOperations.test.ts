@@ -151,7 +151,7 @@ describe('Data Filtering and Sorting', () => {
         });
 
         it('filters out null/undefined values', () => {
-            const withNulls = [...mockRecordings, null, undefined] as any[];
+            const withNulls = [...mockRecordings, null, undefined] as unknown[];
             const filtered = withNulls.filter((item) => item != null);
 
             expect(filtered).toHaveLength(mockRecordings.length);

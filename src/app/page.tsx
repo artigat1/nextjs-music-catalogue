@@ -4,6 +4,7 @@ import Link from 'next/link';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useRecordings } from '@/hooks/useQueries';
 import { useMemo } from 'react';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -45,10 +46,12 @@ function HomeContent() {
             <div className="bg-surface rounded-lg shadow-sm overflow-hidden border border-transparent transition-all hover:shadow-md hover:border-accent/50 h-full flex flex-col">
               <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-surface/50 h-48 relative border-b border-accent/10">
                 {recording.imageUrl ? (
-                  <img
+                  <Image
                     src={recording.imageUrl}
                     alt={recording.title}
-                    className="w-full h-full object-cover object-center group-hover:opacity-90 transition-opacity"
+                    fill
+                    unoptimized
+                    className="object-cover object-center group-hover:opacity-90 transition-opacity"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-foreground/40">

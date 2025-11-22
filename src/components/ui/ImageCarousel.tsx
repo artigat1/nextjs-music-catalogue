@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 interface ImageCarouselProps {
@@ -23,10 +24,12 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
         <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden">
             {/* Main Image */}
             <div className="relative aspect-video">
-                <img
+                <Image
                     src={images[currentIndex]}
                     alt={`Gallery image ${currentIndex + 1}`}
-                    className="w-full h-full object-contain"
+                    fill
+                    unoptimized
+                    className="object-contain"
                 />
 
                 {/* Navigation Arrows */}
@@ -34,7 +37,7 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
                             aria-label="Previous image"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +46,7 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
                             aria-label="Next image"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +58,7 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
 
                 {/* Image Counter */}
                 {images.length > 1 && (
-                    <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                    <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10">
                         {currentIndex + 1} / {images.length}
                     </div>
                 )}
@@ -68,15 +71,17 @@ export default function ImageCarousel({ images }: ImageCarouselProps) {
                         <button
                             key={index}
                             onClick={() => setCurrentIndex(index)}
-                            className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all ${index === currentIndex
-                                    ? 'border-blue-600 ring-2 ring-blue-300'
-                                    : 'border-gray-300 hover:border-gray-400'
+                            className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all relative ${index === currentIndex
+                                ? 'border-blue-600 ring-2 ring-blue-300'
+                                : 'border-gray-300 hover:border-gray-400'
                                 }`}
                         >
-                            <img
+                            <Image
                                 src={image}
                                 alt={`Thumbnail ${index + 1}`}
-                                className="w-full h-full object-cover"
+                                fill
+                                unoptimized
+                                className="object-cover"
                             />
                         </button>
                     ))}

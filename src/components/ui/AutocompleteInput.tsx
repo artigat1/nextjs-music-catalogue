@@ -212,7 +212,7 @@ export default function AutocompleteInput({
                 {allowCreate && inputValue && filteredOptions.length === 0 && !isProcessing && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <div className="px-4 py-2 text-sm text-gray-600">
-                            Press <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to create "{inputValue}"
+                            Press <kbd className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to create &quot;{inputValue}&quot;
                         </div>
                     </div>
                 )}
