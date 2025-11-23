@@ -3,6 +3,13 @@ import { getCollection, getDocument, addDocument, updateDocument, deleteDocument
 import { Recording, Person, Theatre } from '@/types';
 import { DocumentData, WithFieldValue } from 'firebase/firestore';
 
+// Helper function to remove undefined values (Firestore doesn't accept them)
+function removeUndefinedValues<T extends Record<string, unknown>>(obj: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, value]) => value !== undefined)
+    ) as Partial<T>;
+}
+
 // Keys
 export const QUERY_KEYS = {
     recordings: 'recordings',
@@ -116,7 +123,7 @@ export function useDeleteTheatre() {
 export function useAddPerson() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('people', data),
+        mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('people', removeUndefinedValues(data as Record<string, unknown>) as WithFieldValue<DocumentData>),
         onSuccess: async (newId, variables) => {
             // Optimistically update the cache with the new person
             const personData = variables as WithFieldValue<DocumentData> & { name: string; info?: string; dateAdded: unknown; dateUpdated: unknown };
@@ -142,17 +149,68 @@ export function useAddPerson() {
 export function useAddTheatre() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('theatres', data),
+        mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('theatres', removeUndefinedValues(data as Record<string, unknown>) as WithFieldValue<DocumentData>),
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: [QUERY_KEYS.theatres] });
         },
     });
 }
 
+// Plain data types for UI (without Firestore-specific types)
+export interface RecordingInput {
+    title: string;
+    imageUrl?: string;
+    info?: string;
+    oneDriveLink?: string;
+    galleryImages?: string[];
+    releaseYear: number;
+    recordingDate: Date;
+    datePrecision?: 'year' | 'full';
+    theatreId?: string;
+    theatreName?: string;
+    city?: string;
+    artistIds: string[];
+    artistNames: string[];
+    composerIds: string[];
+    lyricistIds: string[];
+}
+
 export function useUpdateRecording() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Recording> }) => updateDocument('recordings', id, data),
+        mutationFn: async ({ id, data }: { id: string; data: RecordingInput }) => {
+            const { Timestamp, doc } = await import('firebase/firestore');
+            const { db } = await import('@/firebase/config');
+
+            // Convert plain data to Firestore format
+            const firestoreData: Record<string, unknown> = {
+                title: data.title,
+                imageUrl: data.imageUrl,
+                info: data.info,
+                oneDriveLink: data.oneDriveLink,
+                galleryImages: data.galleryImages,
+                releaseYear: data.releaseYear,
+                recordingDate: Timestamp.fromDate(data.recordingDate),
+                datePrecision: data.datePrecision,
+                dateUpdated: Timestamp.now(),
+                artistIds: data.artistIds,
+                artistNames: data.artistNames,
+                artistRefs: data.artistIds.map(id => doc(db, 'people', id)),
+                composerIds: data.composerIds,
+                composerRefs: data.composerIds.map(id => doc(db, 'people', id)),
+                lyricistIds: data.lyricistIds,
+                lyricistRefs: data.lyricistIds.map(id => doc(db, 'people', id)),
+            };
+
+            // Add theatre data if provided
+            if (data.theatreId) {
+                firestoreData.theatreRef = doc(db, 'theatres', data.theatreId);
+                firestoreData.theatreName = data.theatreName;
+                firestoreData.city = data.city;
+            }
+
+            return updateDocument('recordings', id, removeUndefinedValues(firestoreData) as WithFieldValue<DocumentData>);
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.recordings] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.recordings, variables.id] });
@@ -163,7 +221,40 @@ export function useUpdateRecording() {
 export function useAddRecording() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (data: WithFieldValue<DocumentData>) => addDocument('recordings', data),
+        mutationFn: async (data: RecordingInput) => {
+            const { Timestamp, doc } = await import('firebase/firestore');
+            const { db } = await import('@/firebase/config');
+
+            // Convert plain data to Firestore format
+            const firestoreData: Record<string, unknown> = {
+                title: data.title,
+                imageUrl: data.imageUrl,
+                info: data.info,
+                oneDriveLink: data.oneDriveLink,
+                galleryImages: data.galleryImages,
+                releaseYear: data.releaseYear,
+                recordingDate: Timestamp.fromDate(data.recordingDate),
+                datePrecision: data.datePrecision,
+                dateAdded: Timestamp.now(),
+                dateUpdated: Timestamp.now(),
+                artistIds: data.artistIds,
+                artistNames: data.artistNames,
+                artistRefs: data.artistIds.map(id => doc(db, 'people', id)),
+                composerIds: data.composerIds,
+                composerRefs: data.composerIds.map(id => doc(db, 'people', id)),
+                lyricistIds: data.lyricistIds,
+                lyricistRefs: data.lyricistIds.map(id => doc(db, 'people', id)),
+            };
+
+            // Add theatre data if provided
+            if (data.theatreId) {
+                firestoreData.theatreRef = doc(db, 'theatres', data.theatreId);
+                firestoreData.theatreName = data.theatreName;
+                firestoreData.city = data.city;
+            }
+
+            return addDocument('recordings', removeUndefinedValues(firestoreData) as WithFieldValue<DocumentData>);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.recordings] });
         },

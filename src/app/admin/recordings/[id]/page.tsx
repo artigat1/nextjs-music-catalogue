@@ -1,10 +1,5 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Recording } from '@/types';
-import { Timestamp, doc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import TheatreCreateModal from '@/components/ui/TheatreCreateModal';
 import {
@@ -14,7 +9,8 @@ import {
     useAddRecording,
     useUpdateRecording,
     useAddPerson,
-    useAddTheatre
+    useAddTheatre,
+    RecordingInput
 } from '@/hooks/useQueries';
 
 export default function RecordingEditorPage() {
@@ -93,6 +89,7 @@ export default function RecordingEditorPage() {
 
     const createNewPerson = async (name: string): Promise<string> => {
         try {
+            const { Timestamp } = await import('firebase/firestore');
             const newPersonData = {
                 name: name.trim(),
                 info: '',
@@ -118,6 +115,7 @@ export default function RecordingEditorPage() {
 
     const handleTheatreCreate = async (name: string, city: string, country: string) => {
         try {
+            const { Timestamp } = await import('firebase/firestore');
             const newTheatreData = {
                 name: name.trim(),
                 city: city.trim(),
@@ -153,76 +151,54 @@ export default function RecordingEditorPage() {
 
         try {
             const theatre = theatres.find(t => t.id === selectedTheatreId);
-            // Theatre is now optional
-
-            const artistRefs = selectedArtistIds.map(id => doc(db, 'people', id));
-            const composerRefs = selectedComposerIds.map(id => doc(db, 'people', id));
-            const lyricistRefs = selectedLyricistIds.map(id => doc(db, 'people', id));
-
             const artistNames = people.filter(p => selectedArtistIds.includes(p.id)).map(p => p.name);
 
-            let recDateTimestamp = Timestamp.now();
+            let recDate = new Date();
             let releaseYear = new Date().getFullYear();
 
             if (recordingDate) {
                 if (datePrecision === 'year') {
-                    // Expecting just a year
                     const year = parseInt(recordingDate);
                     if (!isNaN(year)) {
                         releaseYear = year;
-                        recDateTimestamp = Timestamp.fromDate(new Date(year, 0, 1)); // Jan 1st of that year
+                        recDate = new Date(year, 0, 1); // Jan 1st of that year
                     }
                 } else {
-                    // Expecting full date
                     const dateObj = new Date(recordingDate);
                     if (!isNaN(dateObj.getTime())) {
-                        recDateTimestamp = Timestamp.fromDate(dateObj);
+                        recDate = dateObj;
                         releaseYear = dateObj.getFullYear();
                     }
                 }
             }
 
-            const recordingData: Partial<Recording> = {
+            const recordingData: RecordingInput = {
                 title,
                 imageUrl,
                 info,
-                oneDriveLink: oneDriveLink || undefined,
+                oneDriveLink,
                 galleryImages: galleryImages.trim()
                     ? galleryImages.split('\n').map(url => url.trim()).filter(url => url.length > 0)
                     : undefined,
                 releaseYear,
-                recordingDate: recDateTimestamp,
+                recordingDate: recDate,
                 datePrecision,
-                dateUpdated: Timestamp.now(),
-                artistRefs,
                 artistNames,
                 artistIds: selectedArtistIds,
-                composerRefs,
                 composerIds: selectedComposerIds,
-                lyricistRefs,
                 lyricistIds: selectedLyricistIds,
             };
 
             // Add theatre data if selected
             if (theatre && selectedTheatreId) {
-                recordingData.theatreRef = doc(db, 'theatres', selectedTheatreId);
+                recordingData.theatreId = selectedTheatreId;
                 recordingData.theatreName = theatre.name;
                 recordingData.city = theatre.city;
-            } else {
-                // Explicitly set to null/undefined if removing theatre? 
-                // Firestore merge might keep old values if we don't overwrite.
-                // For now, we just don't include them if not selected, but if editing and removing...
-                // Ideally we should set to deleteField() but for simplicity let's just omit if new.
-                // If editing, we might need to handle clearing. 
-                // Since we are using update/set, let's assume we want to overwrite.
-                // However, Partial<Recording> implies we might not send all fields.
-                // Let's just include them if they exist.
             }
 
             if (!isNew) {
                 await updateRecordingMutation.mutateAsync({ id, data: recordingData });
             } else {
-                recordingData.dateAdded = Timestamp.now();
                 await addRecordingMutation.mutateAsync(recordingData);
             }
 
