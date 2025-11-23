@@ -11,7 +11,13 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "generate-build-info": "node scripts/generate-build-info.mjs"
+    "generate-build-info": "node scripts/generate-build-info.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.10",
@@ -34,7 +40,9 @@
     "@vitest/ui": "^4.0.13",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
+    "husky": "^9.1.7",
     "jsdom": "^27.2.0",
+    "lint-staged": "^16.2.7",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.13"
