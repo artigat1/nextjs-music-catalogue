@@ -9,10 +9,12 @@ import Image from 'next/image';
 import SearchPill from '@/components/ui/SearchPill';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import { useRecording } from '@/hooks/useQueries';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function RecordingDetailsPage() {
     const params = useParams();
     const id = params.id as string;
+    const { user } = useAuth();
 
     const { data: recording, isLoading: loading } = useRecording(id);
 
@@ -105,8 +107,9 @@ export default function RecordingDetailsPage() {
                                         <p className="text-gray-600 text-sm whitespace-pre-wrap">{recording.info}</p>
                                     </div>
                                 )}
-                                {recording.oneDriveLink && (
-                                    <div className="mt-4">
+
+                                <div className="mt-6 flex flex-wrap gap-3">
+                                    {recording.oneDriveLink && (
                                         <a
                                             href={recording.oneDriveLink}
                                             target="_blank"
@@ -118,8 +121,20 @@ export default function RecordingDetailsPage() {
                                             </svg>
                                             Go to OneDrive
                                         </a>
-                                    </div>
-                                )}
+                                    )}
+
+                                    {user && (user.role === 'admin' || user.role === 'editor') && (
+                                        <Link
+                                            href={`/admin/recordings/${id}`}
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors shadow-sm"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Edit Recording
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
