@@ -15,6 +15,18 @@ The CI/CD pipeline is configured to automatically deploy to Firebase Hosting whe
     *   Confirm by clicking **Generate key**.
     *   A JSON file containing your service account credentials will be downloaded. **Keep this file secure.**
 
+3.  **Grant Required Permissions:**
+    *   Go to the [Google Cloud Console IAM & Admin](https://console.cloud.google.com/iam-admin/iam) page.
+    *   Select your project: `music-catalogue`.
+    *   Find the service account you just created (it will look like `firebase-adminsdk-xxxxx@music-catalogue.iam.gserviceaccount.com`).
+    *   Click the **Pencil icon** (Edit principal).
+    *   Add the following roles:
+        *   **Firebase App Hosting Admin** (or `Firebase Admin`)
+        *   **Cloud Functions Admin** (Required for Next.js SSR/API routes)
+        *   **Service Account User** (Required to deploy functions)
+        *   **Artifact Registry Writer** (Required for storing build artifacts)
+    *   Click **Save**.
+
 ## Configure GitHub Secret
 
 1.  **Go to GitHub Repository:**
