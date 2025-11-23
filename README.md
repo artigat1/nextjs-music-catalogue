@@ -1,5 +1,7 @@
 # Steve's Music Catalogue
 
+[![CI/CD Pipeline](https://github.com/artigat1/nextjs-music-catalogue/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/artigat1/nextjs-music-catalogue/actions/workflows/ci-cd.yml)
+
 A premium full-stack web application for cataloguing and browsing musical theatre recordings, featuring Art Deco-inspired design and comprehensive admin capabilities.
 
 ![Steve's Music Catalogue](public/logo.png)
