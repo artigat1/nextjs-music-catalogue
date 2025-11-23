@@ -7,10 +7,6 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.gstatic.com',
       },
-      {
-        protocol: 'https',
-        hostname: 'cdn-imgix.headout.com',
-      },
     ],
   },
 };
