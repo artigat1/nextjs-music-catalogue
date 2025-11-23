@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/generate-build-info.js && next build",
+    "build": "node scripts/generate-build-info.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "generate-build-info": "node scripts/generate-build-info.js"
+    "generate-build-info": "node scripts/generate-build-info.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.10",
