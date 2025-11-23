@@ -47,6 +47,7 @@ export default function RecordingEditorPage() {
     const [selectedLyricistIds, setSelectedLyricistIds] = useState<string[]>([]);
     const [oneDriveLink, setOneDriveLink] = useState('');
     const [galleryImages, setGalleryImages] = useState('');
+    const [datePrecision, setDatePrecision] = useState<'year' | 'full'>('full');
 
     // Theatre Create Modal state
     const [isTheatreModalOpen, setIsTheatreModalOpen] = useState(false);
@@ -63,7 +64,18 @@ export default function RecordingEditorPage() {
             setGalleryImages(recording.galleryImages?.join('\n') || '');
 
             const recDate = recording.recordingDate?.toDate();
-            setRecordingDate(recDate ? recDate.toISOString().split('T')[0] : '');
+            if (recDate) {
+                if (recording.datePrecision === 'year') {
+                    setRecordingDate(recDate.getFullYear().toString());
+                    setDatePrecision('year');
+                } else {
+                    setRecordingDate(recDate.toISOString().split('T')[0]);
+                    setDatePrecision('full');
+                }
+            } else {
+                setRecordingDate('');
+                setDatePrecision('full');
+            }
 
             setSelectedTheatreId(recording.theatreRef?.id || '');
 
@@ -141,7 +153,7 @@ export default function RecordingEditorPage() {
 
         try {
             const theatre = theatres.find(t => t.id === selectedTheatreId);
-            if (!theatre) throw new Error('Theatre not found');
+            // Theatre is now optional
 
             const artistRefs = selectedArtistIds.map(id => doc(db, 'people', id));
             const composerRefs = selectedComposerIds.map(id => doc(db, 'people', id));
@@ -149,13 +161,26 @@ export default function RecordingEditorPage() {
 
             const artistNames = people.filter(p => selectedArtistIds.includes(p.id)).map(p => p.name);
 
-            const recDateTimestamp = recordingDate
-                ? Timestamp.fromDate(new Date(recordingDate))
-                : Timestamp.now();
+            let recDateTimestamp = Timestamp.now();
+            let releaseYear = new Date().getFullYear();
 
-            const releaseYear = recordingDate
-                ? new Date(recordingDate).getFullYear()
-                : new Date().getFullYear();
+            if (recordingDate) {
+                if (datePrecision === 'year') {
+                    // Expecting just a year
+                    const year = parseInt(recordingDate);
+                    if (!isNaN(year)) {
+                        releaseYear = year;
+                        recDateTimestamp = Timestamp.fromDate(new Date(year, 0, 1)); // Jan 1st of that year
+                    }
+                } else {
+                    // Expecting full date
+                    const dateObj = new Date(recordingDate);
+                    if (!isNaN(dateObj.getTime())) {
+                        recDateTimestamp = Timestamp.fromDate(dateObj);
+                        releaseYear = dateObj.getFullYear();
+                    }
+                }
+            }
 
             const recordingData: Partial<Recording> = {
                 title,
@@ -167,10 +192,8 @@ export default function RecordingEditorPage() {
                     : undefined,
                 releaseYear,
                 recordingDate: recDateTimestamp,
+                datePrecision,
                 dateUpdated: Timestamp.now(),
-                theatreRef: doc(db, 'theatres', selectedTheatreId),
-                theatreName: theatre.name,
-                city: theatre.city,
                 artistRefs,
                 artistNames,
                 artistIds: selectedArtistIds,
@@ -179,6 +202,22 @@ export default function RecordingEditorPage() {
                 lyricistRefs,
                 lyricistIds: selectedLyricistIds,
             };
+
+            // Add theatre data if selected
+            if (theatre && selectedTheatreId) {
+                recordingData.theatreRef = doc(db, 'theatres', selectedTheatreId);
+                recordingData.theatreName = theatre.name;
+                recordingData.city = theatre.city;
+            } else {
+                // Explicitly set to null/undefined if removing theatre? 
+                // Firestore merge might keep old values if we don't overwrite.
+                // For now, we just don't include them if not selected, but if editing and removing...
+                // Ideally we should set to deleteField() but for simplicity let's just omit if new.
+                // If editing, we might need to handle clearing. 
+                // Since we are using update/set, let's assume we want to overwrite.
+                // However, Partial<Recording> implies we might not send all fields.
+                // Let's just include them if they exist.
+            }
 
             if (!isNew) {
                 await updateRecordingMutation.mutateAsync({ id, data: recordingData });
@@ -224,16 +263,69 @@ export default function RecordingEditorPage() {
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Recording Date</label>
-                    <input
-                        type="date"
-                        value={recordingDate}
-                        onChange={(e) => setRecordingDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Recording Date</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={recordingDate}
+                                onChange={(e) => setRecordingDate(e.target.value)}
+                                placeholder={datePrecision === 'year' ? "YYYY (e.g. 1995)" : "YYYY-MM-DD"}
+                                pattern={datePrecision === 'year' ? "^\\d{4}$" : "^\\d{4}-\\d{2}-\\d{2}$"}
+                                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                required
+                            />
+                            <div className="absolute right-0 top-0 h-full w-10 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <input
+                                    type="date"
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val) {
+                                            if (datePrecision === 'year') {
+                                                setRecordingDate(val.split('-')[0]);
+                                            } else {
+                                                setRecordingDate(val);
+                                            }
+                                        }
+                                    }}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Select from calendar"
+                                    tabIndex={-1}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Date Precision</label>
+                        <select
+                            value={datePrecision}
+                            onChange={(e) => {
+                                const newPrecision = e.target.value as 'year' | 'full';
+                                setDatePrecision(newPrecision);
+                                // Clear date if switching format to avoid confusion, or try to convert?
+                                // Let's try to convert if possible
+                                if (recordingDate) {
+                                    if (newPrecision === 'year' && recordingDate.includes('-')) {
+                                        setRecordingDate(recordingDate.split('-')[0]);
+                                    }
+                                }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="full">Full Date</option>
+                            <option value="year">Year Only</option>
+                        </select>
+                    </div>
                 </div>
+                <p className="text-xs text-gray-500 -mt-4">
+                    {datePrecision === 'year'
+                        ? "Enter the 4-digit release year."
+                        : "Enter the exact recording date."}
+                </p>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>

@@ -26,9 +26,9 @@ export interface Recording {
     recordingDate: Timestamp;
     dateAdded: Timestamp;
     dateUpdated: Timestamp;
-    theatreRef: DocumentReference;
-    theatreName: string;
-    city: string;
+    theatreRef?: DocumentReference;
+    theatreName?: string;
+    city?: string;
     artistRefs: DocumentReference[];
     artistNames: string[];
     artistIds: string[]; // added to store full list of artist IDs
@@ -38,6 +38,7 @@ export interface Recording {
     lyricistIds: string[]; // added to store full list of lyricist IDs
     oneDriveLink?: string; // optional OneDrive shared link
     galleryImages?: string[]; // optional array of image URLs for carousel
+    datePrecision?: 'year' | 'full'; // indicates if we should display just the year or full date
 }
 
 

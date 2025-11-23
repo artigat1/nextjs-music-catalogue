@@ -5,6 +5,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { useRecordings } from '@/hooks/useQueries';
 import { useMemo } from 'react';
 import Image from 'next/image';
+import { formatDateDisplay } from '@/utils/dateUtils';
 
 export default function Home() {
   return (
@@ -63,9 +64,11 @@ function HomeContent() {
                 <h3 className="text-lg font-bold text-primary mb-1 font-serif">{recording.title}</h3>
                 <p className="text-sm text-foreground/70 mb-1">{recording.theatreName}, {recording.city}</p>
                 <p className="text-sm text-foreground/60">
-                  {recording.recordingDate
-                    ? recording.recordingDate.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-                    : recording.releaseYear}
+                  {formatDateDisplay({
+                    recordingDate: recording.recordingDate,
+                    releaseYear: recording.releaseYear,
+                    datePrecision: recording.datePrecision
+                  })}
                 </p>
               </div>
             </div>

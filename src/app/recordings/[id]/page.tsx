@@ -10,6 +10,7 @@ import SearchPill from '@/components/ui/SearchPill';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import { useRecording } from '@/hooks/useQueries';
 import { useAuth } from '@/hooks/useAuth';
+import { formatDateDisplay } from '@/utils/dateUtils';
 
 export default function RecordingDetailsPage() {
     const params = useParams();
@@ -95,10 +96,10 @@ export default function RecordingDetailsPage() {
                                 <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">Recording</div>
                                 <h1 className="block mt-1 text-3xl leading-tight font-bold text-gray-900">{recording.title}</h1>
                                 <p className="mt-2 text-gray-500">
-                                    {recording.recordingDate?.toDate().toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
+                                    {formatDateDisplay({
+                                        recordingDate: recording.recordingDate,
+                                        releaseYear: recording.releaseYear,
+                                        datePrecision: recording.datePrecision
                                     })}
                                 </p>
                                 {recording.info && (
