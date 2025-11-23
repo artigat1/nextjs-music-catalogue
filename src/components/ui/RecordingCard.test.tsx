@@ -7,6 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 // Mock LoadingImage to simplify testing
 vi.mock('@/components/ui/LoadingImage', () => {
     return {
+        // eslint-disable-next-line @next/next/no-img-element
         default: ({ alt }: { alt: string }) => <img alt={alt} data-testid="loading-image" />
     };
 });
