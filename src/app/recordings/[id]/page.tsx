@@ -5,7 +5,7 @@ import { Person, Theatre } from '@/types';
 import { getDoc, DocumentReference } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import LoadingImage from '@/components/ui/LoadingImage';
 import SearchPill from '@/components/ui/SearchPill';
 import ImageCarousel from '@/components/ui/ImageCarousel';
 import { useRecording } from '@/hooks/useQueries';
@@ -80,12 +80,13 @@ export default function RecordingDetailsPage() {
                             <div className="md:flex-shrink-0 md:w-48 bg-gray-200">
                                 {recording.imageUrl ? (
                                     <div className="relative h-48 w-full md:h-full md:w-48">
-                                        <Image
+                                        <LoadingImage
                                             className="object-contain bg-gray-200"
                                             src={recording.imageUrl}
                                             alt={recording.title}
                                             fill
                                             unoptimized
+                                            containerClassName="h-full w-full"
                                         />
                                     </div>
                                 ) : (
