@@ -37,11 +37,15 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
                         {recording.title}
                     </h3>
 
-                    <p className="text-sm text-foreground/70 mb-2 line-clamp-1">
-                        {recording.theatreName}{recording.city ? `, ${recording.city}` : ''}
-                    </p>
+                    {(recording.theatreName || recording.city) && (
+                        <p className="text-sm text-foreground/70 mb-1 line-clamp-1">
+                            {recording.theatreName}
+                            {recording.theatreName && recording.city && ', '}
+                            {recording.city}
+                        </p>
+                    )}
 
-                    <div className="mt-auto pt-3 border-t border-accent/10 space-y-1">
+                    <div className="mt-auto pt-2 border-t border-accent/10">
                         <p className="text-sm text-foreground/60">
                             {formatDateDisplay({
                                 recordingDate: recording.recordingDate,

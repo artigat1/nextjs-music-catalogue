@@ -21,10 +21,14 @@ describe('RecordingCard', () => {
         recordingDate: { toDate: () => new Date('1958-01-01') } as Timestamp,
         datePrecision: 'year',
         imageUrl: 'https://example.com/poster.jpg',
+        info: 'Test info',
         artistIds: [],
         artistNames: ['Julie Andrews', 'Rex Harrison'],
+        artistRefs: [],
         composerIds: [],
+        composerRefs: [],
         lyricistIds: [],
+        lyricistRefs: [],
         dateAdded: { toDate: () => new Date() } as Timestamp,
         dateUpdated: { toDate: () => new Date() } as Timestamp,
     };
@@ -45,7 +49,7 @@ describe('RecordingCard', () => {
     });
 
     it('renders placeholder when imageUrl is missing', () => {
-        const recordingWithoutImage = { ...mockRecording, imageUrl: undefined };
+        const recordingWithoutImage = { ...mockRecording, imageUrl: '' };
         render(<RecordingCard recording={recordingWithoutImage} />);
 
         expect(screen.queryByTestId('loading-image')).not.toBeInTheDocument();
@@ -59,6 +63,32 @@ describe('RecordingCard', () => {
         render(<RecordingCard recording={mockRecording} />);
 
         expect(screen.queryByText('Julie Andrews, Rex Harrison')).not.toBeInTheDocument();
+    });
+
+    it('renders theatre and city correctly', () => {
+        render(<RecordingCard recording={mockRecording} />);
+        expect(screen.getByText('Drury Lane, London')).toBeInTheDocument();
+    });
+
+    it('renders only theatre when city is missing', () => {
+        const recording = { ...mockRecording, city: undefined };
+        render(<RecordingCard recording={recording} />);
+        expect(screen.getByText('Drury Lane')).toBeInTheDocument();
+    });
+
+    it('renders only city when theatre is missing', () => {
+        const recording = { ...mockRecording, theatreName: undefined };
+        render(<RecordingCard recording={recording} />);
+        expect(screen.getByText('London')).toBeInTheDocument();
+    });
+
+    it('does not render theatre/city paragraph when both are missing', () => {
+        const recording = { ...mockRecording, theatreName: undefined, city: undefined };
+        render(<RecordingCard recording={recording} />);
+        // Ensure neither text is present (using queryByText to avoid error)
+        expect(screen.queryByText('Drury Lane')).not.toBeInTheDocument();
+        expect(screen.queryByText('London')).not.toBeInTheDocument();
+        expect(screen.queryByText(',')).not.toBeInTheDocument();
     });
 
     it('links to the correct recording page', () => {
