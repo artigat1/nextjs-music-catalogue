@@ -1,74 +1,127 @@
-'use client';
+"use client";
 
-import { useTheatres, useDeleteTheatre } from '@/hooks/useQueries';
-import Link from 'next/link';
+import { useTheatres, useDeleteTheatre } from "@/hooks/useQueries";
+import { useTableSort } from "@/hooks/useTableSort";
+import SortIcon from "@/components/ui/SortIcon";
+import Link from "next/link";
 
 export default function TheatresPage() {
-    const { data: theatres = [], isLoading: loading } = useTheatres();
-    const deleteTheatreMutation = useDeleteTheatre();
+  const { data: theatres = [], isLoading: loading } = useTheatres();
+  const deleteTheatreMutation = useDeleteTheatre();
+  const {
+    sortedData: sortedTheatres,
+    sortField,
+    sortOrder,
+    handleSort,
+  } = useTableSort({
+    data: theatres,
+    defaultSortField: "name",
+  });
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this theatre?')) return;
-        try {
-            await deleteTheatreMutation.mutateAsync(id);
-        } catch (error) {
-            console.error("Error deleting theatre:", error);
-        }
-    };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this theatre?")) return;
+    try {
+      await deleteTheatreMutation.mutateAsync(id);
+    } catch (error) {
+      console.error("Error deleting theatre:", error);
+    }
+  };
 
-    if (loading) return <div>Loading theatres...</div>;
+  if (loading) return <div>Loading theatres...</div>;
 
-    return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Theatres</h2>
-                <Link
-                    href="/admin/theatres/new"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                    Add Theatre
-                </Link>
-            </div>
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold font-serif text-primary">Theatres</h2>
+        <Link
+          href="/admin/theatres/new"
+          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          Add Theatre
+        </Link>
+      </div>
 
-            <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {theatres.map((theatre) => (
-                            <tr key={theatre.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    <Link href={`/admin/theatres/${theatre.id}`} className="hover:text-indigo-900 hover:underline">
-                                        {theatre.name}
-                                    </Link>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{theatre.city}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{theatre.country}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link
-                                        href={`/admin/theatres/${theatre.id}`}
-                                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                    >
-                                        Edit
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDelete(theatre.id)}
-                                        className="text-red-600 hover:text-red-900"
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+      <div className="bg-surface rounded-lg shadow-sm border border-accent/20 overflow-hidden">
+        <table className="min-w-full divide-y divide-accent/10">
+          <thead className="bg-surface/50">
+            <tr>
+              <th
+                className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif cursor-pointer hover:bg-accent/5"
+                onClick={() => handleSort("name")}
+              >
+                Name
+                <SortIcon
+                  field="name"
+                  currentField={sortField}
+                  direction={sortOrder}
+                />
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif cursor-pointer hover:bg-accent/5"
+                onClick={() => handleSort("city")}
+              >
+                City
+                <SortIcon
+                  field="city"
+                  currentField={sortField}
+                  direction={sortOrder}
+                />
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider font-serif cursor-pointer hover:bg-accent/5"
+                onClick={() => handleSort("country")}
+              >
+                Country
+                <SortIcon
+                  field="country"
+                  currentField={sortField}
+                  direction={sortOrder}
+                />
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-bold text-primary uppercase tracking-wider font-serif">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-background divide-y divide-accent/10">
+            {sortedTheatres.map((theatre) => (
+              <tr
+                key={theatre.id}
+                className="hover:bg-surface/30 transition-colors"
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                  <Link
+                    href={`/admin/theatres/${theatre.id}`}
+                    className="hover:text-primary hover:underline"
+                  >
+                    {theatre.name}
+                  </Link>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/70">
+                  {theatre.city}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/70">
+                  {theatre.country}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <Link
+                    href={`/admin/theatres/${theatre.id}`}
+                    className="text-accent hover:text-primary mr-4 transition-colors"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(theatre.id)}
+                    className="text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
