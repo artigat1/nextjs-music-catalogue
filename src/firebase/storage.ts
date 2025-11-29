@@ -132,6 +132,7 @@ export const validateImageFile = (
     "image/png",
     "image/webp",
     "image/gif",
+    "image/avif",
   ];
 
   if (!allowedTypes.includes(file.type)) {
