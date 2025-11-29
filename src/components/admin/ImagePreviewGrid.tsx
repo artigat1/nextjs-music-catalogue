@@ -34,7 +34,8 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({
       {images.map((url) => (
         <div
           key={url}
-          className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 group"
+          className="relative w-full rounded-lg overflow-hidden bg-gray-100 group"
+          style={{ paddingBottom: "100%" }}
         >
           <Image
             src={url}
