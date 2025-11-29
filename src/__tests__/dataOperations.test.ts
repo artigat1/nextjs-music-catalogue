@@ -16,12 +16,12 @@ describe('Data Filtering and Sorting', () => {
         it('filters recordings by theatre name', () => {
             const searchTerm = 'royal';
             const results = mockRecordings.filter((rec) =>
-                rec.theatreName.toLowerCase().includes(searchTerm.toLowerCase())
+                rec.theatreName?.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
             expect(results.length).toBeGreaterThan(0);
             results.forEach((rec) => {
-                expect(rec.theatreName.toLowerCase()).toContain('royal');
+                expect(rec.theatreName?.toLowerCase()).toContain('royal');
             });
         });
 
@@ -39,12 +39,12 @@ describe('Data Filtering and Sorting', () => {
         it('filters recordings by city', () => {
             const searchTerm = 'london';
             const results = mockRecordings.filter((rec) =>
-                rec.city.toLowerCase().includes(searchTerm.toLowerCase())
+                rec.city?.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
             expect(results.length).toBeGreaterThan(0);
             results.forEach((rec) => {
-                expect(rec.city.toLowerCase()).toContain('london');
+                expect(rec.city?.toLowerCase()).toContain('london');
             });
         });
 
