@@ -1,8 +1,8 @@
 'use client';
 
 import AuthGuard from '@/components/auth/AuthGuard';
-import { useRecordings } from '@/hooks/useQueries';
-import { useMemo } from 'react';
+import { useInfiniteRecordings } from '@/hooks/useQueries';
+import { useMemo, useEffect, useRef, useCallback } from 'react';
 import RecordingCard from '@/components/ui/RecordingCard';
 
 
@@ -15,20 +15,46 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const { data: allRecordings = [], isLoading: loading } = useRecordings();
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteRecordings(10);
 
-  // Get latest 10 recordings sorted by date
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Flatten all pages into a single array of recordings
   const recordings = useMemo(() => {
-    return [...allRecordings]
-      .sort((a, b) => {
-        const dateA = a.recordingDate?.toDate().getTime() || 0;
-        const dateB = b.recordingDate?.toDate().getTime() || 0;
-        return dateB - dateA;
-      })
-      .slice(0, 10);
-  }, [allRecordings]);
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.items);
+  }, [data]);
 
-  if (loading) {
+  // Intersection Observer for infinite scroll
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0,
+    });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center text-foreground/60">Loading latest recordings...</div>
@@ -51,6 +77,21 @@ function HomeContent() {
           No recordings found.
         </div>
       )}
+
+      {/* Load more trigger */}
+      <div ref={loadMoreRef} className="py-8 flex justify-center">
+        {isFetchingNextPage && (
+          <div className="flex items-center gap-2 text-foreground/60">
+            <div className="w-5 h-5 border-2 border-foreground/30 border-t-foreground/60 rounded-full animate-spin" />
+            Loading more...
+          </div>
+        )}
+        {!hasNextPage && recordings.length > 0 && (
+          <div className="text-foreground/40 text-sm">
+            No more recordings
+          </div>
+        )}
+      </div>
     </div>
   );
 }
