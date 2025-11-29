@@ -24,7 +24,7 @@ export const uploadImage = (
   file: File,
   recordingId: string,
   storagePath: "main" | "gallery",
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const filename = generateUniqueFilename(file.name);
@@ -35,7 +35,8 @@ export const uploadImage = (
     uploadTask.on(
       "state_changed",
       (snapshot: UploadTaskSnapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         if (onProgress) {
           onProgress(progress);
         }
@@ -50,7 +51,7 @@ export const uploadImage = (
         } catch (error) {
           reject(error);
         }
-      }
+      },
     );
   });
 };
@@ -62,42 +63,57 @@ export const uploadMultipleImages = async (
   files: File[],
   recordingId: string,
   storagePath: "main" | "gallery",
-  onProgress?: (fileIndex: number, progress: number) => void
+  onProgress?: (fileIndex: number, progress: number) => void,
 ): Promise<string[]> => {
   const uploadPromises = files.map((file, index) => {
-    return uploadImage(
-      file,
-      recordingId,
-      storagePath,
-      (progress) => {
-        if (onProgress) {
-          onProgress(index, progress);
-        }
+    return uploadImage(file, recordingId, storagePath, (progress) => {
+      if (onProgress) {
+        onProgress(index, progress);
       }
-    );
+    });
   });
 
   return Promise.all(uploadPromises);
 };
 
 /**
+ * Check if a URL is a Firebase Storage URL
+ */
+export const isFirebaseStorageUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname === "firebasestorage.googleapis.com";
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Delete an image from Firebase Storage using its URL
+ * Only deletes if the URL is from Firebase Storage
+ * For external URLs, this function does nothing (just removes from state)
  */
 export const deleteImage = async (imageUrl: string): Promise<void> => {
+  // Only attempt to delete if it's a Firebase Storage URL
+  if (!isFirebaseStorageUrl(imageUrl)) {
+    // External URL - just remove from state, don't try to delete from storage
+    return;
+  }
+
   try {
     // Extract the storage path from the URL
     const url = new URL(imageUrl);
     const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
 
     if (!pathMatch) {
-      throw new Error("Invalid storage URL");
+      throw new Error("Invalid Firebase Storage URL");
     }
 
     const path = decodeURIComponent(pathMatch[1]);
     const storageRef = ref(storage, path);
     await deleteObject(storageRef);
   } catch (error) {
-    console.error("Error deleting image:", error);
+    console.error("Error deleting image from Firebase Storage:", error);
     throw error;
   }
 };
@@ -107,9 +123,15 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
  */
 export const validateImageFile = (
   file: File,
-  maxSizeMB: number = 5
+  maxSizeMB: number = 5,
 ): { valid: boolean; error?: string } => {
-  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+  ];
 
   if (!allowedTypes.includes(file.type)) {
     return {
