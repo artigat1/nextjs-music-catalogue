@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { getCollection, getDocument, addDocument, updateDocument, deleteDocument, getPaginatedCollection, PaginatedResult } from '@/firebase/firestore';
+import { getCollection, getDocument, addDocument, updateDocument, deleteDocument, getPaginatedCollection } from '@/firebase/firestore';
 import { Recording, Person, Theatre } from '@/types';
 import { DocumentData, WithFieldValue, QueryDocumentSnapshot } from 'firebase/firestore';
 

@@ -74,10 +74,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     setUploads((prev) => [...prev, ...newUploads]);
 
     // Upload files
-    const uploadPromises = validFiles.map((file, index) => {
+    const uploadPromises = validFiles.map((file) => {
       return uploadImage(file, recordingId, storagePath, (progress) => {
         setUploads((prev) =>
-          prev.map((upload, i) =>
+          prev.map((upload) =>
             upload.file === file ? { ...upload, progress } : upload
           )
         );
