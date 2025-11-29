@@ -102,8 +102,9 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
 
   try {
     // Extract the storage path from the URL
+    // URL format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token=...
     const url = new URL(imageUrl);
-    const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+    const pathMatch = url.pathname.match(/\/o\/(.+)$/);
 
     if (!pathMatch) {
       throw new Error("Invalid Firebase Storage URL");

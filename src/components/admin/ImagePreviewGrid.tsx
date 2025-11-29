@@ -3,7 +3,7 @@ import Image from "next/image";
 
 interface ImagePreviewGridProps {
   images: string[];
-  onDelete: (url: string) => void;
+  onDelete: (url: string) => Promise<void> | void;
   disabled?: boolean;
 }
 
@@ -13,6 +13,8 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({
   disabled = false,
 }) => {
   const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [errorImages, setErrorImages] = useState<Set<string>>(new Set());
 
   const handleDelete = async (url: string) => {
     if (disabled || deletingUrl) return;
@@ -20,6 +22,9 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({
     setDeletingUrl(url);
     try {
       await onDelete(url);
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+      // Error is handled by parent component
     } finally {
       setDeletingUrl(null);
     }
@@ -34,20 +39,34 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({
       {images.map((url) => (
         <div
           key={url}
-          className="relative w-full rounded-lg overflow-hidden bg-gray-100 group"
-          style={{ paddingBottom: "100%" }}
+          className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 group"
         >
-          <Image
-            src={url}
-            alt="Preview"
-            fill
-            unoptimized
-            className="object-cover"
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-          />
+          {errorImages.has(url) ? (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
+              Failed to load
+            </div>
+          ) : (
+            <>
+              {!loadedImages.has(url) && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                </div>
+              )}
+              <Image
+                src={url}
+                alt="Preview"
+                fill
+                unoptimized
+                className={`object-cover transition-opacity duration-300 ${loadedImages.has(url) ? 'opacity-100' : 'opacity-0'}`}
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                onLoad={() => setLoadedImages(prev => new Set(prev).add(url))}
+                onError={() => setErrorImages(prev => new Set(prev).add(url))}
+              />
+            </>
+          )}
 
           {/* Overlay with delete button */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center">
             <button
               onClick={() => handleDelete(url)}
               disabled={disabled || deletingUrl === url}
@@ -80,7 +99,7 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({
 
           {/* Loading state overlay */}
           {deletingUrl === url && (
-            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
               <div className="text-sm text-gray-600">Deleting...</div>
             </div>
           )}
