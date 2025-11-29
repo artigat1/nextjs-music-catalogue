@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import TheatreCreateModal from "@/components/ui/TheatreCreateModal";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 import {
   useRecording,
   useTheatres,
@@ -353,14 +354,15 @@ export default function RecordingEditorPage() {
         </p>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Image URL
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Recording Image
           </label>
-          <input
-            type="text"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          <ImageUpload
+            mode="single"
+            currentImages={imageUrl ? [imageUrl] : []}
+            onImagesChange={(urls) => setImageUrl(urls[0] || "")}
+            recordingId={isNew ? "temp" : id}
+            storagePath="main"
           />
         </div>
 
@@ -378,19 +380,19 @@ export default function RecordingEditorPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Gallery Images
           </label>
-          <textarea
-            value={galleryImages}
-            onChange={(e) => setGalleryImages(e.target.value)}
-            rows={4}
-            placeholder="Paste image URLs here, one per line..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+          <ImageUpload
+            mode="multiple"
+            currentImages={galleryImages
+              .split("\n")
+              .filter((url) => url.trim())}
+            onImagesChange={(urls) => setGalleryImages(urls.join("\n"))}
+            recordingId={isNew ? "temp" : id}
+            storagePath="gallery"
+            maxFiles={20}
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Enter one image URL per line. These will be displayed in a carousel.
-          </p>
         </div>
 
         <AutocompleteInput
