@@ -16,8 +16,8 @@ export default function TheatreCreateModal({
     onClose,
     onCreate,
 }: TheatreCreateModalProps) {
-    const [city, setCity] = useState('');
-    const [country, setCountry] = useState('');
+    const [city, setCity] = useState('London');
+    const [country, setCountry] = useState('United Kingdom');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
