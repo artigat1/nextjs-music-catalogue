@@ -8,7 +8,7 @@ interface UsTableSortProps<T> {
   defaultSortOrder?: SortOrder;
 }
 
-export function useTableSort<T extends Record<string, unknown>>({
+export function useTableSort<T extends object>({
   data,
   defaultSortField,
   defaultSortOrder = "asc",
@@ -27,27 +27,29 @@ export function useTableSort<T extends Record<string, unknown>>({
 
   const sortedData = useMemo(() => {
     const sorted = [...data].sort((a, b) => {
-      let aValue: string | number = a[sortField];
-      let bValue: string | number = b[sortField];
+      const aRaw = (a as Record<string, unknown>)[sortField];
+      const bRaw = (b as Record<string, unknown>)[sortField];
+
+      let aValue: string | number = "";
+      let bValue: string | number = "";
 
       // Handle string values with case-insensitive comparison
-      if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase();
-      }
-      if (typeof bValue === "string") {
-        bValue = bValue.toLowerCase();
+      if (typeof aRaw === "string") {
+        aValue = aRaw.toLowerCase();
+      } else if (typeof aRaw === "number") {
+        aValue = aRaw;
+      } else if (aRaw && typeof aRaw === "object" && "toMillis" in aRaw) {
+        // Handle Firestore Timestamps
+        aValue = (aRaw as { toMillis: () => number }).toMillis();
       }
 
-      // Handle null/undefined values
-      if (aValue == null) aValue = "";
-      if (bValue == null) bValue = "";
-
-      // Handle Firestore Timestamps (they have toMillis method)
-      if (aValue && typeof aValue === "object" && "toMillis" in aValue) {
-        aValue = aValue.toMillis();
-      }
-      if (bValue && typeof bValue === "object" && "toMillis" in bValue) {
-        bValue = bValue.toMillis();
+      if (typeof bRaw === "string") {
+        bValue = bRaw.toLowerCase();
+      } else if (typeof bRaw === "number") {
+        bValue = bRaw;
+      } else if (bRaw && typeof bRaw === "object" && "toMillis" in bRaw) {
+        // Handle Firestore Timestamps
+        bValue = (bRaw as { toMillis: () => number }).toMillis();
       }
 
       if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
