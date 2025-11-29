@@ -1,22 +1,54 @@
 "use client";
 
+import { useState, useMemo, useCallback } from "react";
 import { useTheatres, useDeleteTheatre } from "@/hooks/useQueries";
 import { useTableSort } from "@/hooks/useTableSort";
+import { usePagination } from "@/hooks/usePagination";
 import SortIcon from "@/components/ui/SortIcon";
+import Pagination from "@/components/ui/Pagination";
+import SearchInput from "@/components/ui/SearchInput";
 import Link from "next/link";
 
 export default function TheatresPage() {
   const { data: theatres = [], isLoading: loading } = useTheatres();
   const deleteTheatreMutation = useDeleteTheatre();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTheatres = useMemo(() => {
+    if (!searchQuery.trim()) return theatres;
+    const query = searchQuery.toLowerCase();
+    return theatres.filter(
+      (theatre) =>
+        theatre.name?.toLowerCase().includes(query) ||
+        theatre.city?.toLowerCase().includes(query) ||
+        theatre.country?.toLowerCase().includes(query)
+    );
+  }, [theatres, searchQuery]);
+
   const {
     sortedData: sortedTheatres,
     sortField,
     sortOrder,
     handleSort,
   } = useTableSort({
-    data: theatres,
+    data: filteredTheatres,
     defaultSortField: "name",
   });
+
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    totalItems,
+    setPage,
+  } = usePagination({
+    data: sortedTheatres,
+    pageSize: 25,
+  });
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this theatre?")) return;
@@ -32,13 +64,25 @@ export default function TheatresPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold font-serif text-primary">Theatres</h2>
+        <div>
+          <h2 className="text-2xl font-bold font-serif text-primary">Theatres</h2>
+          <p className="text-sm text-foreground/60 mt-1">
+            {totalItems} theatre{totalItems !== 1 ? 's' : ''}{searchQuery && ` matching "${searchQuery}"`}
+          </p>
+        </div>
         <Link
           href="/admin/theatres/new"
           className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm"
         >
           Add Theatre
         </Link>
+      </div>
+
+      <div className="mb-4">
+        <SearchInput
+          placeholder="Search by name, city, or country..."
+          onSearch={handleSearch}
+        />
       </div>
 
       <div className="bg-surface rounded-lg shadow-sm border border-accent/20 overflow-hidden">
@@ -84,7 +128,7 @@ export default function TheatresPage() {
             </tr>
           </thead>
           <tbody className="bg-background divide-y divide-accent/10">
-            {sortedTheatres.map((theatre) => (
+            {paginatedData.map((theatre) => (
               <tr
                 key={theatre.id}
                 className="hover:bg-surface/30 transition-colors"
@@ -119,9 +163,26 @@ export default function TheatresPage() {
                 </td>
               </tr>
             ))}
+            {paginatedData.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-foreground/50">
+                  {searchQuery ? `No theatres found matching "${searchQuery}"` : "No theatres found"}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
     </div>
   );
 }
