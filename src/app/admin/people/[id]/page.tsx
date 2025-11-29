@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { getDocument, addDocument, updateDocument } from '@/firebase/firestore';
 import { Person } from '@/types';
 import { Timestamp } from 'firebase/firestore';
 
-export default function PersonEditorPage({ params }: { params: { id: string } }) {
+export default function PersonEditorPage() {
     const router = useRouter();
-    const isNew = params.id === 'new';
+    const params = useParams();
+    const id = params?.id as string;
+    const isNew = id === 'new';
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
 
@@ -16,14 +18,14 @@ export default function PersonEditorPage({ params }: { params: { id: string } })
     const [info, setInfo] = useState('');
 
     useEffect(() => {
-        if (!isNew) {
+        if (!isNew && id) {
             const fetchPerson = async () => {
                 try {
-                    const data = await getDocument('people', params.id);
+                    const data = await getDocument('people', id);
                     if (data) {
                         const person = data as Person;
-                        setName(person.name);
-                        setInfo(person.info);
+                        setName(person.name || '');
+                        setInfo(person.info || '');
                     } else {
                         console.error("Person not found");
                         router.push('/admin/people');
@@ -36,7 +38,7 @@ export default function PersonEditorPage({ params }: { params: { id: string } })
             };
             fetchPerson();
         }
-    }, [isNew, params.id, router]);
+    }, [isNew, id, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,7 +52,7 @@ export default function PersonEditorPage({ params }: { params: { id: string } })
             };
 
             if (!isNew) {
-                await updateDocument('people', params.id, personData);
+                await updateDocument('people', id, personData);
             } else {
                 personData.dateAdded = Timestamp.now();
                 await addDocument('people', personData);

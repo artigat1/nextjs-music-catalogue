@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { getDocument, addDocument, updateDocument } from '@/firebase/firestore';
 import { Theatre } from '@/types';
 import { Timestamp } from 'firebase/firestore';
 
-export default function TheatreEditorPage({ params }: { params: { id: string } }) {
+export default function TheatreEditorPage() {
     const router = useRouter();
-    const isNew = params.id === 'new';
+    const params = useParams();
+    const id = params?.id as string;
+    const isNew = id === 'new';
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
 
@@ -17,15 +19,15 @@ export default function TheatreEditorPage({ params }: { params: { id: string } }
     const [country, setCountry] = useState('');
 
     useEffect(() => {
-        if (!isNew) {
+        if (!isNew && id) {
             const fetchTheatre = async () => {
                 try {
-                    const data = await getDocument('theatres', params.id);
+                    const data = await getDocument('theatres', id);
                     if (data) {
                         const theatre = data as Theatre;
-                        setName(theatre.name);
-                        setCity(theatre.city);
-                        setCountry(theatre.country);
+                        setName(theatre.name || '');
+                        setCity(theatre.city || '');
+                        setCountry(theatre.country || '');
                     } else {
                         console.error("Theatre not found");
                         router.push('/admin/theatres');
@@ -38,7 +40,7 @@ export default function TheatreEditorPage({ params }: { params: { id: string } }
             };
             fetchTheatre();
         }
-    }, [isNew, params.id, router]);
+    }, [isNew, id, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,7 +55,7 @@ export default function TheatreEditorPage({ params }: { params: { id: string } }
             };
 
             if (!isNew) {
-                await updateDocument('theatres', params.id, theatreData);
+                await updateDocument('theatres', id, theatreData);
             } else {
                 theatreData.dateAdded = Timestamp.now();
                 await addDocument('theatres', theatreData);
@@ -71,37 +73,37 @@ export default function TheatreEditorPage({ params }: { params: { id: string } }
     return (
         <div className="max-w-2xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">{isNew ? 'Add Theatre' : 'Edit Theatre'}</h2>
+                <h2 className="text-2xl font-bold font-serif text-primary">{isNew ? 'Add Theatre' : 'Edit Theatre'}</h2>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
+            <form onSubmit={handleSubmit} className="bg-surface p-6 rounded-lg shadow-sm border border-accent/20 space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">Name</label>
                     <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-md"
+                        className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
                         required
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">City</label>
                     <input
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-md"
+                        className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
                         required
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">Country</label>
                     <input
                         type="text"
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-md"
+                        className="w-full px-3 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
                         required
                     />
                 </div>
@@ -109,14 +111,14 @@ export default function TheatreEditorPage({ params }: { params: { id: string } }
                     <button
                         type="button"
                         onClick={() => router.back()}
-                        className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                        className="px-4 py-2 text-foreground/70 hover:bg-surface rounded-md transition-colors"
                         disabled={saving}
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50"
                         disabled={saving}
                     >
                         {saving ? 'Saving...' : (isNew ? 'Add Theatre' : 'Save Changes')}
