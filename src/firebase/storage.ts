@@ -124,7 +124,7 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
  */
 export const validateImageFile = (
   file: File,
-  maxSizeMB: number = 5,
+  maxSizeMB: number = 10,
 ): { valid: boolean; error?: string } => {
   const allowedTypes = [
     "image/jpeg",
