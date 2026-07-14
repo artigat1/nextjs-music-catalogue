@@ -1,6 +1,7 @@
 import { auth } from "./config";
 import {
     GoogleAuthProvider,
+    OAuthProvider,
     signInWithPopup,
     signOut as firebaseSignOut,
     onAuthStateChanged,
@@ -8,6 +9,7 @@ import {
 } from "firebase/auth";
 
 const googleProvider = new GoogleAuthProvider();
+const microsoftProvider = new OAuthProvider("microsoft.com");
 
 export const signInWithGoogle = async () => {
     try {
@@ -15,6 +17,16 @@ export const signInWithGoogle = async () => {
         return result.user;
     } catch (error) {
         console.error("Error signing in with Google", error);
+        throw error;
+    }
+};
+
+export const signInWithMicrosoft = async () => {
+    try {
+        const result = await signInWithPopup(auth, microsoftProvider);
+        return result.user;
+    } catch (error) {
+        console.error("Error signing in with Microsoft", error);
         throw error;
     }
 };

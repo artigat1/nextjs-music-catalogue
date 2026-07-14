@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { signInWithGoogle } from '@/firebase/auth';
+import { signInWithGoogle, signInWithMicrosoft } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -15,6 +15,16 @@ export default function LoginPage() {
             router.push('/');
         } catch (err) {
             setError('Failed to sign in with Google.');
+            console.error(err);
+        }
+    };
+
+    const handleMicrosoftLogin = async () => {
+        try {
+            await signInWithMicrosoft();
+            router.push('/');
+        } catch (err) {
+            setError('Failed to sign in with Microsoft.');
             console.error(err);
         }
     };
@@ -42,6 +52,19 @@ export default function LoginPage() {
                         className="w-6 h-6"
                     />
                     Sign in with Google
+                </button>
+
+                <button
+                    onClick={handleMicrosoftLogin}
+                    className="w-full flex items-center justify-center gap-3 bg-white border border-accent/30 text-foreground hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition duration-200 shadow-sm hover:shadow-md mt-4"
+                >
+                    <svg width="24" height="24" viewBox="0 0 23 23" className="w-6 h-6" aria-hidden="true">
+                        <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                        <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
+                        <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
+                        <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
+                    </svg>
+                    Sign in with Microsoft
                 </button>
             </div>
         </div>
