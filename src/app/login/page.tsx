@@ -3,16 +3,26 @@
 import Image from 'next/image';
 import { signInWithGoogle, signInWithMicrosoft } from '@/firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
+    const { user, authError } = useAuth();
+    const displayError = error || authError;
+
+    // Redirect once the allowlist check has accepted the user, so a rejected
+    // user stays here and sees the error message.
+    useEffect(() => {
+        if (user) {
+            router.push('/');
+        }
+    }, [user, router]);
 
     const handleGoogleLogin = async () => {
         try {
             await signInWithGoogle();
-            router.push('/');
         } catch (err) {
             setError('Failed to sign in with Google.');
             console.error(err);
@@ -22,7 +32,6 @@ export default function LoginPage() {
     const handleMicrosoftLogin = async () => {
         try {
             await signInWithMicrosoft();
-            router.push('/');
         } catch (err) {
             setError('Failed to sign in with Microsoft.');
             console.error(err);
@@ -34,9 +43,9 @@ export default function LoginPage() {
             <div className="max-w-md w-full bg-surface shadow-lg rounded-lg p-8 border border-accent/20">
                 <h2 className="text-2xl font-bold text-center mb-6 text-primary font-serif">Sign In</h2>
 
-                {error && (
+                {displayError && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        {error}
+                        {displayError}
                     </div>
                 )}
 

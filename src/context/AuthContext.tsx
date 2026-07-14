@@ -16,23 +16,26 @@ export interface AppUser {
 interface AuthContextType {
     user: AppUser | null;
     loading: boolean;
+    authError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
+    authError: null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<AppUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthChange(async (firebaseUser) => {
             if (firebaseUser) {
                 try {
-                    // Ideally we should have a more robust way to map users, but per previous logic:
-                    const userDocRef = doc(db, 'users', firebaseUser.email!);
+                    // User docs are keyed by lowercased email (see admin users page).
+                    const userDocRef = doc(db, 'users', firebaseUser.email!.toLowerCase());
                     const userDoc = await getDoc(userDocRef);
 
                     if (userDoc.exists()) {
@@ -44,13 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             photoURL: firebaseUser.photoURL,
                             role: userData.role || 'viewer',
                         });
+                        setAuthError(null);
                     } else {
                         console.warn('User not found in allowlist');
                         setUser(null);
+                        setAuthError(`${firebaseUser.email} does not have access to this catalogue. Contact the site owner to be added.`);
                     }
                 } catch (error) {
                     console.error("Error fetching user role:", error);
                     setUser(null);
+                    setAuthError('Something went wrong checking your access. Please try again.');
                 }
             } else {
                 setUser(null);
@@ -62,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading }}>
+        <AuthContext.Provider value={{ user, loading, authError }}>
             {children}
         </AuthContext.Provider>
     );

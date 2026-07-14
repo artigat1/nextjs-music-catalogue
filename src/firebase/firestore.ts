@@ -5,6 +5,7 @@ import {
     getDoc,
     getDocs,
     addDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
     query,
@@ -36,6 +37,11 @@ export const getCollection = async (collectionName: string) => {
 export const addDocument = async <T extends WithFieldValue<DocumentData>>(collectionName: string, data: T) => {
     const docRef = await addDoc(collection(db, collectionName), data);
     return docRef.id;
+};
+
+export const setDocument = async <T extends WithFieldValue<DocumentData>>(collectionName: string, id: string, data: T) => {
+    const docRef = doc(db, collectionName, id);
+    return await setDoc(docRef, data);
 };
 
 export const updateDocument = async <T extends DocumentData>(collectionName: string, id: string, data: UpdateData<T>) => {

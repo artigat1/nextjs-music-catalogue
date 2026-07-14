@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCollection, addDocument, updateDocument, deleteDocument } from '@/firebase/firestore';
+import { getCollection, setDocument, updateDocument, deleteDocument } from '@/firebase/firestore';
 import { UserData } from '@/types';
 import { Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,29 +34,15 @@ export default function UsersPage() {
         if (!newUserEmail) return;
 
         try {
-            // Use email as ID for simplicity in this model as discussed
-            // But addDocument generates an ID. 
-            // Ideally we should setDoc with email as ID if we want to enforce uniqueness easily
-            // or just check if it exists. 
-            // For now, let's just add it. 
-            // Wait, useAuth expects to find the user by email. 
-            // So we should probably use setDoc with email as ID, or add a field 'email'.
-            // My useAuth implementation tries to find a doc with ID = email.
-            // So I must use setDoc (which I didn't export in firestore.ts, I only exported addDocument).
-            // I should update firestore.ts or use addDocument and change useAuth.
-            // Changing useAuth to query by email field is safer than email as ID (PII in ID).
-            // But for now, let's stick to the plan or update firestore.ts.
-
-            // Actually, I'll just use addDocument and let's say I'll update useAuth to query by email.
-            // That's better practice.
-
+            // AuthContext looks users up by document ID = email, so key the doc by email.
+            const email = newUserEmail.trim().toLowerCase();
             const newUser: UserData = {
-                email: newUserEmail,
+                email,
                 role: newUserRole,
                 dateAdded: Timestamp.now(),
             };
 
-            await addDocument('users', newUser);
+            await setDocument('users', email, newUser);
             setNewUserEmail('');
             fetchUsers();
         } catch (error) {
