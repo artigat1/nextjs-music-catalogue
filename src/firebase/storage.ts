@@ -1,7 +1,6 @@
 import {
   ref,
   uploadBytesResumable,
-  getDownloadURL,
   deleteObject,
   UploadTaskSnapshot,
 } from "firebase/storage";
@@ -30,7 +29,7 @@ export const uploadImage = (
     const filename = generateUniqueFilename(file.name);
     const path = `recordings/${recordingId}/${storagePath}/${filename}`;
     const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, file, { cacheControl: 'private,no-store' });
 
     uploadTask.on(
       "state_changed",
@@ -44,14 +43,7 @@ export const uploadImage = (
       (error) => {
         reject(error);
       },
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        } catch (error) {
-          reject(error);
-        }
-      },
+      () => resolve(uploadTask.snapshot.ref.toString()),
     );
   });
 };
@@ -82,7 +74,7 @@ export const uploadMultipleImages = async (
 export const isFirebaseStorageUrl = (url: string): boolean => {
   try {
     const urlObj = new URL(url);
-    return urlObj.hostname === "firebasestorage.googleapis.com";
+    return urlObj.protocol === "gs:" || urlObj.hostname === "firebasestorage.googleapis.com" || urlObj.hostname === "storage.googleapis.com";
   } catch {
     return false;
   }
@@ -101,17 +93,7 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
   }
 
   try {
-    // Extract the storage path from the URL
-    // URL format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token=...
-    const url = new URL(imageUrl);
-    const pathMatch = url.pathname.match(/\/o\/(.+)$/);
-
-    if (!pathMatch) {
-      throw new Error("Invalid Firebase Storage URL");
-    }
-
-    const path = decodeURIComponent(pathMatch[1]);
-    const storageRef = ref(storage, path);
+    const storageRef = ref(storage, imageUrl);
     await deleteObject(storageRef);
   } catch (error) {
     console.error("Error deleting image from Firebase Storage:", error);

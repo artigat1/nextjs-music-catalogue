@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A Next.js 16 (App Router) + Firebase app for cataloguing musical theatre recordings. Public browse/search pages plus an admin area (`/admin`) with CRUD for recordings, people, theatres, and users. Deployed to Firebase Hosting at https://music-catalogue.web.app.
+A Next.js 16 (App Router) + Firebase app for cataloguing musical theatre recordings. Private, allowlist-protected browse/search pages plus an admin area (`/admin`) with CRUD for recordings, people, theatres, and users. Deployed to Firebase Hosting at https://music-catalogue.web.app.
 
 ## Commands
 
@@ -53,3 +53,5 @@ Vitest + React Testing Library, jsdom environment, `globals: true` (no need to i
 - Path alias `@/` → `src/` (configured in both `tsconfig.json` and `vitest.config.ts`).
 
 See TESTING.md for detailed patterns.
+
+All routes except `/login` pass through root `AppAccess`. Firestore and Storage rules enforce the same verified-email allowlist on direct data access. See DEPLOYMENT.md for token revocation and external-sharing rollout requirements. Never treat robots.txt or a client-side redirect as data security.

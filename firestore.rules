@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function hasVerifiedEmail() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true;
+    }
+
+    function hasRole(roles) {
+      return hasVerifiedEmail()
+        && get(/databases/$(database)/documents/users/$(request.auth.token.email.lower())).data.role in roles;
+    }
+
+    match /users/{email} {
+      allow get: if (hasVerifiedEmail() && email == request.auth.token.email.lower())
+        || hasRole(['admin']);
+      allow list: if hasRole(['admin']);
+      allow create, update: if hasRole(['admin'])
+        && request.resource.data.email == email
+        && email == email.lower()
+        && request.resource.data.role in ['viewer', 'editor', 'admin'];
+      allow delete: if hasRole(['admin']);
+    }
+
+    match /{collection}/{id} {
+      allow read: if collection in ['recordings', 'people', 'theatres']
+        && hasRole(['viewer', 'editor', 'admin']);
+      allow write: if collection in ['recordings', 'people', 'theatres']
+        && hasRole(['editor', 'admin']);
+    }
+  }
+}

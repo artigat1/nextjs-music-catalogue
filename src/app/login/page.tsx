@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { signInWithGoogle, signInWithMicrosoft } from '@/firebase/auth';
+import { signInWithGoogle, signInWithMicrosoft, signOut } from '@/firebase/auth';
+import { sendEmailVerification } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
     const { user, authError } = useAuth();
     const displayError = error || authError;
 
@@ -20,20 +22,21 @@ export default function LoginPage() {
         }
     }, [user, router]);
 
-    const handleGoogleLogin = async () => {
+    const handleLogin = async (provider: 'Google' | 'Microsoft') => {
+        setError(null);
+        setNotice(null);
         try {
-            await signInWithGoogle();
+            const signedInUser = await (provider === 'Google' ? signInWithGoogle() : signInWithMicrosoft());
+            if (!signedInUser.emailVerified) {
+                try {
+                    await sendEmailVerification(signedInUser);
+                    setNotice('Verification email sent. Open the link in that email, then sign in again.');
+                } finally {
+                    await signOut();
+                }
+            }
         } catch (err) {
-            setError('Failed to sign in with Google.');
-            console.error(err);
-        }
-    };
-
-    const handleMicrosoftLogin = async () => {
-        try {
-            await signInWithMicrosoft();
-        } catch (err) {
-            setError('Failed to sign in with Microsoft.');
+            setError(`Could not complete sign-in with ${provider}. Please try again.`);
             console.error(err);
         }
     };
@@ -43,14 +46,16 @@ export default function LoginPage() {
             <div className="max-w-md w-full bg-surface shadow-lg rounded-lg p-8 border border-accent/20">
                 <h2 className="text-2xl font-bold text-center mb-6 text-primary font-serif">Sign In</h2>
 
-                {displayError && (
+                {notice && <p role="status" className="mb-4 text-foreground">{notice}</p>}
+
+                {displayError && !notice && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                         {displayError}
                     </div>
                 )}
 
                 <button
-                    onClick={handleGoogleLogin}
+                    onClick={() => handleLogin('Google')}
                     className="w-full flex items-center justify-center gap-3 bg-white border border-accent/30 text-foreground hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition duration-200 shadow-sm hover:shadow-md"
                 >
                     <Image
@@ -64,7 +69,7 @@ export default function LoginPage() {
                 </button>
 
                 <button
-                    onClick={handleMicrosoftLogin}
+                    onClick={() => handleLogin('Microsoft')}
                     className="w-full flex items-center justify-center gap-3 bg-white border border-accent/30 text-foreground hover:bg-gray-50 font-medium py-3 px-4 rounded-lg transition duration-200 shadow-sm hover:shadow-md mt-4"
                 >
                     <svg width="24" height="24" viewBox="0 0 23 23" className="w-6 h-6" aria-hidden="true">

@@ -12,7 +12,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "generate-build-info": "node scripts/generate-build-info.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:rules": "npx --yes firebase-tools@15.24.0 emulators:exec --config firebase.emulators.json --project demo-music-catalogue --only firestore,storage \"node --test tests/security-rules.mjs\""
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -27,6 +28,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
