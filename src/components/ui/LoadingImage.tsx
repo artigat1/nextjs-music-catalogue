@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Image, { ImageProps } from 'next/image';
+import type { ImageProps } from 'next/image';
+import Image from './CatalogueImage';
 
 interface LoadingImageProps extends Omit<ImageProps, 'onLoad' | 'onError'> {
     containerClassName?: string;

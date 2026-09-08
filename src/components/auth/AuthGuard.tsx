@@ -16,10 +16,10 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                router.push('/login');
+                router.replace('/login');
             } else if (allowedRoles && !allowedRoles.includes(user.role || 'viewer')) {
                 // Redirect to home or unauthorized page if role doesn't match
-                router.push('/');
+                router.replace('/');
             }
         }
     }, [user, loading, router, allowedRoles]);

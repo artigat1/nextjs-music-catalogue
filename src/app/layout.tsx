@@ -3,7 +3,7 @@ import { Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/ui/Navbar";
-import QueryProvider from "@/components/providers/QueryProvider";
+import AppAccess from "@/components/auth/AppAccess";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -20,6 +20,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Steve's Music Catalogue",
   description: "Manage your music collection",
+  robots: { index: false, follow: false, noarchive: true },
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
@@ -35,14 +36,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${montserrat.variable} font-sans antialiased`}>
-        <QueryProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <AppAccess>
             <Navbar />
             <main className="min-h-screen bg-gray-50">
               {children}
             </main>
-          </AuthProvider>
-        </QueryProvider>
+          </AppAccess>
+        </AuthProvider>
       </body>
     </html>
   );

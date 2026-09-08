@@ -115,6 +115,7 @@ npm run build
 Deploy to Firebase Hosting:
 
 ```bash
+firebase deploy --only firestore:rules,storage
 firebase deploy --only hosting
 ```
 
@@ -168,7 +169,7 @@ recording-catalogue/
 
 - **Admin**: Full access to all features including user management
 - **Editor**: Can manage recordings, people, and theatres
-- **Viewer**: Read-only access to public content
+- **Viewer**: Read-only access to the private catalogue
 
 ## 🎯 Key Features Implementation
 

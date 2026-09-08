@@ -1,19 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{
+      source: "/:path*",
+      headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
+    }];
+  },
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "www.gstatic.com",
-      },
-      {
-        protocol: "https",
-        hostname: "1drv.ms",
-      },
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
       },
     ],
   },

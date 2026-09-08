@@ -18,6 +18,7 @@ vi.mock('@/firebase/auth', () => ({
 vi.mock('@/firebase/config', () => ({
     db: {},
     auth: {},
+    storage: {},
     firebaseConfig: {},
 }));
 

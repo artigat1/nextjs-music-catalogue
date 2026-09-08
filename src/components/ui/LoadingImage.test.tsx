@@ -14,8 +14,7 @@ describe('LoadingImage', () => {
         render(<LoadingImage {...defaultProps} />);
         const img = screen.getByRole('img');
         expect(img).toHaveAttribute('alt', 'Test Image');
-        // Next.js Image component modifies the src, so we check if it contains the encoded original src
-        expect(img.getAttribute('src')).toContain(encodeURIComponent('https://example.com/image.jpg'));
+        expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
     });
 
     it('shows loading state initially', () => {

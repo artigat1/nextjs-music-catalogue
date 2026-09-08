@@ -49,6 +49,15 @@ jobs:
       - name: Run tests
         run: npm test --if-present
 
+      - name: Set up Java for Firebase rules tests
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Test Firestore and Storage rules
+        run: npm run test:rules
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -99,6 +108,16 @@ jobs:
         with:
           name: build-output
           path: .next
+
+      - name: Deploy Firestore and Storage rules
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+          FIREBASE_SERVICE_ACCOUNT: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-rules-credentials.json"
+          trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
+          node -e 'require("fs").writeFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, process.env.FIREBASE_SERVICE_ACCOUNT, { mode: 0o600 })'
+          npx --yes firebase-tools@15.24.0 deploy --project music-catalogue --only firestore:rules,storage --non-interactive
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
