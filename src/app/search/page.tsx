@@ -51,15 +51,8 @@ function SearchContent() {
     const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
     if (searchParams !== prevSearchParams) {
         setPrevSearchParams(searchParams);
-        const query = searchParams.get('q') || '';
-        const type = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
-
-        if (query !== searchTerm) {
-            setSearchTerm(query);
-        }
-        if (type !== searchType) {
-            setSearchType(type);
-        }
+        setSearchTerm(searchParams.get('q') || '');
+        setSearchType((searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all');
     }
 
     // Filter recordings using useMemo
