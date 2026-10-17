@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 
 interface AutocompleteOption {
     id: string;
@@ -30,7 +30,6 @@ export default function AutocompleteInput({
 }: AutocompleteInputProps) {
     const [inputValue, setInputValue] = useState('');
     const [isOpen, setIsOpen] = useState(false);
-    const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -45,20 +44,17 @@ export default function AutocompleteInput({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        if (inputValue) {
-            const filtered = options.filter(
-                (option) =>
-                    !selectedIds.includes(option.id) &&
-                    option.label.toLowerCase().includes(inputValue.toLowerCase())
-            );
-            setFilteredOptions(filtered);
-            setIsOpen(filtered.length > 0);
-        } else {
-            setFilteredOptions([]);
-            setIsOpen(false);
-        }
-    }, [inputValue, options, selectedIds]);
+    const filteredOptions = useMemo(
+        () =>
+            inputValue
+                ? options.filter(
+                      (option) =>
+                          !selectedIds.includes(option.id) &&
+                          option.label.toLowerCase().includes(inputValue.toLowerCase())
+                  )
+                : [],
+        [inputValue, options, selectedIds]
+    );
 
     const handleSelect = (option: AutocompleteOption) => {
         onSelect(option.id);
@@ -177,7 +173,10 @@ export default function AutocompleteInput({
                 <input
                     type="text"
                     value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    onChange={(e) => {
+                        setInputValue(e.target.value);
+                        setIsOpen(true);
+                    }}
                     onFocus={() => inputValue && setIsOpen(true)}
                     onPaste={handlePaste}
                     onKeyDown={handleKeyDown}

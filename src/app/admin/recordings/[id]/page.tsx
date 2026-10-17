@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import TheatreCreateModal from "@/components/ui/TheatreCreateModal";
@@ -56,48 +56,48 @@ export default function RecordingEditorPage() {
   >(null);
 
   // Load data when recording is fetched
-  useEffect(() => {
-    if (recording) {
-      setTitle(recording.title || "");
-      setImageUrl(recording.imageUrl || "");
-      setInfo(recording.info || "");
-      setOneDriveLink(recording.oneDriveLink || "");
-      setGalleryImages(recording.galleryImages?.join("\n") || "");
+  const [loadedRecording, setLoadedRecording] = useState<typeof recording>(undefined);
+  if (recording && recording !== loadedRecording) {
+    setLoadedRecording(recording);
+    setTitle(recording.title || "");
+    setImageUrl(recording.imageUrl || "");
+    setInfo(recording.info || "");
+    setOneDriveLink(recording.oneDriveLink || "");
+    setGalleryImages(recording.galleryImages?.join("\n") || "");
 
-      const recDate = recording.recordingDate?.toDate();
-      if (recDate) {
-        if (recording.datePrecision === "year") {
-          setRecordingDate(recDate.getFullYear().toString());
-          setDatePrecision("year");
-        } else {
-          setRecordingDate(recDate.toISOString().split("T")[0]);
-          setDatePrecision("full");
-        }
+    const recDate = recording.recordingDate?.toDate();
+    if (recDate) {
+      if (recording.datePrecision === "year") {
+        setRecordingDate(recDate.getFullYear().toString());
+        setDatePrecision("year");
       } else {
-        setRecordingDate("");
+        setRecordingDate(recDate.toISOString().split("T")[0]);
         setDatePrecision("full");
       }
-
-      setSelectedTheatreId(recording.theatreRef?.id || "");
-
-      // Fallback to refs if ids arrays are missing (backward compatibility)
-      const artistIds =
-        recording.artistIds || recording.artistRefs?.map((ref) => ref.id) || [];
-      setSelectedArtistIds(artistIds);
-
-      const composerIds =
-        recording.composerIds ||
-        recording.composerRefs?.map((ref) => ref.id) ||
-        [];
-      setSelectedComposerIds(composerIds);
-
-      const lyricistIds =
-        recording.lyricistIds ||
-        recording.lyricistRefs?.map((ref) => ref.id) ||
-        [];
-      setSelectedLyricistIds(lyricistIds);
+    } else {
+      setRecordingDate("");
+      setDatePrecision("full");
     }
-  }, [recording]);
+
+    setSelectedTheatreId(recording.theatreRef?.id || "");
+
+    // Fallback to refs if ids arrays are missing (backward compatibility)
+    const artistIds =
+      recording.artistIds || recording.artistRefs?.map((ref) => ref.id) || [];
+    setSelectedArtistIds(artistIds);
+
+    const composerIds =
+      recording.composerIds ||
+      recording.composerRefs?.map((ref) => ref.id) ||
+      [];
+    setSelectedComposerIds(composerIds);
+
+    const lyricistIds =
+      recording.lyricistIds ||
+      recording.lyricistRefs?.map((ref) => ref.id) ||
+      [];
+    setSelectedLyricistIds(lyricistIds);
+  }
 
   const createNewPerson = async (name: string): Promise<string> => {
     try {

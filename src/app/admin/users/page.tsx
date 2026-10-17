@@ -13,21 +13,20 @@ export default function UsersPage() {
     const [newUserRole, setNewUserRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
     const { user: currentUser } = useAuth();
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const loadUsers = () =>
+        getCollection('users')
+            .then((data) => setUsers(data as (UserData & { id: string })[]))
+            .catch((error) => console.error("Error fetching users:", error))
+            .finally(() => setLoading(false));
 
-    const fetchUsers = async () => {
+    const fetchUsers = () => {
         setLoading(true);
-        try {
-            const data = await getCollection('users');
-            setUsers(data as (UserData & { id: string })[]);
-        } catch (error) {
-            console.error("Error fetching users:", error);
-        } finally {
-            setLoading(false);
-        }
+        return loadUsers();
     };
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();

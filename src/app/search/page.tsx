@@ -48,18 +48,12 @@ function SearchContent() {
     }, [searchTerm, searchType, pathname, router, searchParams]);
 
     // Sync State with URL (Handle Back/Forward navigation)
-    useEffect(() => {
-        const query = searchParams.get('q') || '';
-        const type = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
-
-        if (query !== searchTerm) {
-            setSearchTerm(query);
-        }
-        if (type !== searchType) {
-            setSearchType(type);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
+    const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
+    if (searchParams !== prevSearchParams) {
+        setPrevSearchParams(searchParams);
+        setSearchTerm(searchParams.get('q') || '');
+        setSearchType((searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all');
+    }
 
     // Filter recordings using useMemo
     const filteredRecordings = useMemo(() => {
