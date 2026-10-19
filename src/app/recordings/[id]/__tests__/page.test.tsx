@@ -48,12 +48,13 @@ it('renders no Theatre card, or placeholder text, when the recording has no thea
     expect(screen.queryByText('Theatre information not available.')).not.toBeInTheDocument();
 });
 
-it('renders no Theatre card when the theatre document is missing', async () => {
+it('keeps the Theatre card with a fallback when the theatre document cannot be loaded', async () => {
     firestore.getDoc.mockResolvedValue({ id: 'ref-1', exists: () => false, data: () => undefined });
     state.recording = mockRecording;
     render(<RecordingDetailsPage />);
 
     expect(await screen.findByRole('heading', { name: 'Artists' })).toBeInTheDocument();
     await waitFor(() => expect(firestore.getDoc).toHaveBeenCalled());
-    expect(screen.queryByRole('heading', { name: 'Theatre' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Theatre' })).toBeInTheDocument();
+    expect(screen.getByText('Theatre information not available.')).toBeInTheDocument();
 });

@@ -139,13 +139,13 @@ describe('useQueries Hooks', () => {
             );
         });
 
-        it('leaves recordingType out when it is not set', async () => {
+        it('saves recordingType as live when it is not set', async () => {
             vi.mocked(firestoreModule.addDocument).mockResolvedValue('new-id');
 
             const { result } = renderHook(() => useAddRecording(), { wrapper: createWrapper() });
             await result.current.mutateAsync(input);
 
-            expect(vi.mocked(firestoreModule.addDocument).mock.lastCall?.[1]).not.toHaveProperty('recordingType');
+            expect(vi.mocked(firestoreModule.addDocument).mock.lastCall?.[1]).toHaveProperty('recordingType', 'live');
         });
     });
 

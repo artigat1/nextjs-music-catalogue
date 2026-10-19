@@ -41,7 +41,7 @@ export interface Recording {
     oneDriveLink?: string; // optional OneDrive shared link
     galleryImages?: string[]; // optional array of image URLs for carousel
     datePrecision?: 'year' | 'full'; // indicates if we should display just the year or full date
-    recordingType?: RecordingType; // missing means live
+    recordingType?: RecordingType;
 }
 
 

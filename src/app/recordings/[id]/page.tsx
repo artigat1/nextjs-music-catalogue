@@ -150,13 +150,17 @@ export default function RecordingDetailsPage() {
                     )}
 
                     {/* Theatre Card */}
-                    {recording.theatreRef && theatre && (
+                    {recording.theatreRef && (
                         <div className="bg-white rounded-lg shadow-sm border p-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Theatre</h2>
-                            <div className="flex flex-wrap gap-2">
-                                <SearchPill label={theatre.name} searchQuery={theatre.name} />
-                                <SearchPill label={theatre.city} searchQuery={theatre.city} />
-                            </div>
+                            {theatre ? (
+                                <div className="flex flex-wrap gap-2">
+                                    <SearchPill label={theatre.name} searchQuery={theatre.name} />
+                                    <SearchPill label={theatre.city} searchQuery={theatre.city} />
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">Theatre information not available.</p>
+                            )}
                         </div>
                     )}
 
