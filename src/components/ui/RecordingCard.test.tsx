@@ -16,6 +16,7 @@ describe('RecordingCard', () => {
     const mockRecording: Recording & { id: string } = {
         id: '123',
         title: 'My Fair Lady',
+        recordingType: 'live',
         theatreName: 'Drury Lane',
         city: 'London',
         releaseYear: 1958,

@@ -184,7 +184,7 @@ export interface RecordingInput {
     releaseYear: number;
     recordingDate: Date;
     datePrecision?: 'year' | 'full';
-    recordingType?: RecordingType;
+    recordingType: RecordingType;
     theatreId?: string;
     theatreName?: string;
     city?: string;
@@ -211,7 +211,7 @@ export function useUpdateRecording() {
                 releaseYear: data.releaseYear,
                 recordingDate: Timestamp.fromDate(data.recordingDate),
                 datePrecision: data.datePrecision,
-                recordingType: data.recordingType ?? 'live',
+                recordingType: data.recordingType,
                 dateUpdated: Timestamp.now(),
                 artistIds: data.artistIds,
                 artistNames: data.artistNames,
@@ -255,7 +255,7 @@ export function useAddRecording() {
                 releaseYear: data.releaseYear,
                 recordingDate: Timestamp.fromDate(data.recordingDate),
                 datePrecision: data.datePrecision,
-                recordingType: data.recordingType ?? 'live',
+                recordingType: data.recordingType,
                 dateAdded: Timestamp.now(),
                 dateUpdated: Timestamp.now(),
                 artistIds: data.artistIds,
