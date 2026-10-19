@@ -134,8 +134,9 @@ function SearchContent() {
                         </select>
                     </div>
                     <div className="w-full md:w-48">
-                        <label className="block text-sm font-medium text-foreground/80 mb-1">Sort By</label>
+                        <label htmlFor="search-sort" className="block text-sm font-medium text-foreground/80 mb-1">Sort By</label>
                         <select
+                            id="search-sort"
                             value={sortKey}
                             onChange={(e) => setSortKey(e.target.value as SortKey)}
                             className="w-full px-4 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
