@@ -2,26 +2,41 @@
 
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useInfiniteRecordings } from '@/hooks/useQueries';
-import { useMemo, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import RecordingCard from '@/components/ui/RecordingCard';
 
+const VIEWS = {
+  all: { label: 'All', heading: 'Latest Recordings' },
+  live: { label: 'Live', heading: 'Latest Live Recordings' },
+  album: { label: 'Cast albums', heading: 'Latest Cast Albums' },
+};
+type ViewKey = keyof typeof VIEWS;
+
+const parseView = (value: string | null): ViewKey => (value === 'live' || value === 'album' ? value : 'all');
 
 export default function Home() {
   return (
     <AuthGuard>
-      <HomeContent />
+      <Suspense fallback={<div className="p-8 text-center text-foreground/60">Loading...</div>}>
+        <HomeContent />
+      </Suspense>
     </AuthGuard>
   );
 }
 
 function HomeContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const view = parseView(useSearchParams().get('view'));
+
   const {
     data,
     isLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteRecordings(10);
+  } = useInfiniteRecordings(10, view === 'all' ? undefined : view);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -54,17 +69,33 @@ function HomeContent() {
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center text-foreground/60">Loading latest recordings...</div>
-      </div>
-    );
-  }
+  const selectView = (next: ViewKey) => {
+    router.push(next === 'all' ? pathname : `${pathname}?view=${next}`, { scroll: false });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-primary mb-8 font-serif border-b border-accent/20 pb-4">Latest Recordings</h1>
+      <h1 className="text-3xl font-bold text-primary mb-4 font-serif border-b border-accent/20 pb-4">{VIEWS[view].heading}</h1>
+
+      <div role="group" aria-label="Recording type" className="inline-flex rounded-md border border-accent/30 overflow-hidden mb-8">
+        {(Object.keys(VIEWS) as ViewKey[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={view === key}
+            onClick={() => selectView(key)}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              view === key ? 'bg-primary text-white' : 'bg-surface text-foreground/70 hover:bg-accent/10'
+            }`}
+          >
+            {VIEWS[key].label}
+          </button>
+        ))}
+      </div>
+
+      {isLoading && (
+        <div className="text-center text-foreground/60">Loading latest recordings...</div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {recordings.map((recording) => (
@@ -72,7 +103,7 @@ function HomeContent() {
         ))}
       </div>
 
-      {recordings.length === 0 && (
+      {!isLoading && recordings.length === 0 && (
         <div className="text-center text-foreground/50 py-12">
           No recordings found.
         </div>

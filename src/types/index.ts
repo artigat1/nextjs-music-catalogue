@@ -17,6 +17,8 @@ export interface Person {
     dateUpdated: Timestamp;
 }
 
+export type RecordingType = 'live' | 'album';
+
 export interface Recording {
     id?: string;
     title: string;
@@ -39,6 +41,7 @@ export interface Recording {
     oneDriveLink?: string; // optional OneDrive shared link
     galleryImages?: string[]; // optional array of image URLs for carousel
     datePrecision?: 'year' | 'full'; // indicates if we should display just the year or full date
+    recordingType?: RecordingType; // missing means live
 }
 
 

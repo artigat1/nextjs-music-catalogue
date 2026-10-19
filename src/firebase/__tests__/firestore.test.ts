@@ -126,6 +126,55 @@ describe('Firestore Helper Functions', () => {
         });
     });
 
+    describe('getPaginatedCollection', () => {
+        type Snapshot = import('firebase/firestore').QuerySnapshot<import('firebase/firestore').DocumentData>;
+        const mockPage = (count: number) => ({
+            docs: Array.from({ length: count }, (_, i) => ({ id: String(i), data: () => ({ n: i }) })),
+        });
+
+        it('adds an equality filter when given one', async () => {
+            const { getDocs, where, query } = await import('firebase/firestore');
+            vi.mocked(getDocs).mockResolvedValue(mockPage(1) as unknown as Snapshot);
+
+            await firestoreModule.getPaginatedCollection('recordings', 'recordingDate', 'desc', 10, null, {
+                field: 'recordingType',
+                value: 'live',
+            });
+
+            expect(where).toHaveBeenCalledWith('recordingType', '==', 'live');
+            expect(vi.mocked(query).mock.calls[0]).toHaveLength(4); // collection, where, orderBy, limit
+        });
+
+        it('does not filter when no filter is given', async () => {
+            const { getDocs, where } = await import('firebase/firestore');
+            vi.mocked(getDocs).mockResolvedValue(mockPage(1) as unknown as Snapshot);
+
+            await firestoreModule.getPaginatedCollection('recordings', 'recordingDate');
+
+            expect(where).not.toHaveBeenCalled();
+        });
+
+        it('keeps the filter on the next page and reports whether there is more', async () => {
+            const { getDocs, where, query } = await import('firebase/firestore');
+            const page = mockPage(3);
+            vi.mocked(getDocs).mockResolvedValue(page as unknown as Snapshot);
+
+            const result = await firestoreModule.getPaginatedCollection(
+                'recordings',
+                'recordingDate',
+                'desc',
+                2,
+                page.docs[0] as unknown as import('firebase/firestore').QueryDocumentSnapshot,
+                { field: 'recordingType', value: 'album' }
+            );
+
+            expect(where).toHaveBeenCalledWith('recordingType', '==', 'album');
+            expect(vi.mocked(query).mock.calls[0]).toHaveLength(5); // plus startAfter
+            expect(result.items).toHaveLength(2);
+            expect(result.hasMore).toBe(true);
+        });
+    });
+
     describe('deleteDocument', () => {
         it('deletes document successfully', async () => {
             const { deleteDoc } = await import('firebase/firestore');

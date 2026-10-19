@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getCollection, getDocument, addDocument, updateDocument, deleteDocument, getPaginatedCollection } from '@/firebase/firestore';
-import { Recording, Person, Theatre } from '@/types';
+import { Recording, RecordingType, Person, Theatre } from '@/types';
 import { DocumentData, WithFieldValue, QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Helper function to remove undefined values (Firestore doesn't accept them)
@@ -28,16 +28,17 @@ export function useRecordings() {
     });
 }
 
-export function useInfiniteRecordings(pageSize: number = 10) {
+export function useInfiniteRecordings(pageSize: number = 10, recordingType?: RecordingType) {
     return useInfiniteQuery({
-        queryKey: [QUERY_KEYS.recordings, 'infinite', pageSize],
+        queryKey: [QUERY_KEYS.recordings, 'infinite', pageSize, recordingType ?? null],
         queryFn: async ({ pageParam }) => {
             return getPaginatedCollection<Recording & { id: string }>(
                 'recordings',
                 'recordingDate',
                 'desc',
                 pageSize,
-                pageParam as QueryDocumentSnapshot<DocumentData> | null
+                pageParam as QueryDocumentSnapshot<DocumentData> | null,
+                recordingType ? { field: 'recordingType', value: recordingType } : undefined
             );
         },
         initialPageParam: null as QueryDocumentSnapshot<DocumentData> | null,
@@ -183,6 +184,7 @@ export interface RecordingInput {
     releaseYear: number;
     recordingDate: Date;
     datePrecision?: 'year' | 'full';
+    recordingType?: RecordingType;
     theatreId?: string;
     theatreName?: string;
     city?: string;
@@ -209,6 +211,7 @@ export function useUpdateRecording() {
                 releaseYear: data.releaseYear,
                 recordingDate: Timestamp.fromDate(data.recordingDate),
                 datePrecision: data.datePrecision,
+                recordingType: data.recordingType,
                 dateUpdated: Timestamp.now(),
                 artistIds: data.artistIds,
                 artistNames: data.artistNames,
@@ -252,6 +255,7 @@ export function useAddRecording() {
                 releaseYear: data.releaseYear,
                 recordingDate: Timestamp.fromDate(data.recordingDate),
                 datePrecision: data.datePrecision,
+                recordingType: data.recordingType,
                 dateAdded: Timestamp.now(),
                 dateUpdated: Timestamp.now(),
                 artistIds: data.artistIds,
