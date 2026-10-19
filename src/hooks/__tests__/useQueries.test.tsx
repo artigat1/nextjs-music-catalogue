@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useRecordings, usePeople, useTheatres } from '@/hooks/useQueries';
+import { useRecordings, useInfiniteRecordings, useAddRecording, usePeople, useTheatres } from '@/hooks/useQueries';
 import * as firestoreModule from '@/firebase/firestore';
 import { mockRecordings, mockPeople, mockTheatres } from '@/test/mockData';
 
@@ -12,6 +12,7 @@ vi.mock('@/firebase/firestore', () => ({
     addDocument: vi.fn(),
     updateDocument: vi.fn(),
     deleteDocument: vi.fn(),
+    getPaginatedCollection: vi.fn(),
 }));
 
 const createWrapper = () => {
@@ -73,6 +74,71 @@ describe('useQueries Hooks', () => {
 
             expect(result.current.isLoading).toBe(true);
         });
+    });
+
+    describe('useInfiniteRecordings', () => {
+        const emptyPage = { items: [], lastDoc: null, hasMore: false };
+
+        it('queries without a filter by default', async () => {
+            vi.mocked(firestoreModule.getPaginatedCollection).mockResolvedValue(emptyPage);
+
+            const { result } = renderHook(() => useInfiniteRecordings(10), {
+                wrapper: createWrapper(),
+            });
+
+            await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+            expect(firestoreModule.getPaginatedCollection).toHaveBeenCalledWith(
+                'recordings', 'recordingDate', 'desc', 10, null, undefined
+            );
+        });
+
+        it('filters by recording type and refetches when the type changes', async () => {
+            vi.mocked(firestoreModule.getPaginatedCollection).mockResolvedValue(emptyPage);
+
+            const { result, rerender } = renderHook(
+                ({ type }: { type?: 'live' | 'album' }) => useInfiniteRecordings(10, type),
+                { wrapper: createWrapper(), initialProps: { type: 'live' as 'live' | 'album' | undefined } }
+            );
+
+            await waitFor(() => expect(result.current.isSuccess).toBe(true));
+            expect(firestoreModule.getPaginatedCollection).toHaveBeenLastCalledWith(
+                'recordings', 'recordingDate', 'desc', 10, null, { field: 'recordingType', value: 'live' }
+            );
+
+            rerender({ type: 'album' });
+
+            await waitFor(() =>
+                expect(firestoreModule.getPaginatedCollection).toHaveBeenLastCalledWith(
+                    'recordings', 'recordingDate', 'desc', 10, null, { field: 'recordingType', value: 'album' }
+                )
+            );
+        });
+    });
+
+    describe('useAddRecording', () => {
+        const input = {
+            title: 'Hamilton',
+            releaseYear: 2016,
+            recordingDate: new Date('2016-01-01'),
+            artistIds: [],
+            artistNames: [],
+            composerIds: [],
+            lyricistIds: [],
+        };
+
+        it('writes the recording type', async () => {
+            vi.mocked(firestoreModule.addDocument).mockResolvedValue('new-id');
+
+            const { result } = renderHook(() => useAddRecording(), { wrapper: createWrapper() });
+            await result.current.mutateAsync({ ...input, recordingType: 'album' });
+
+            expect(firestoreModule.addDocument).toHaveBeenCalledWith(
+                'recordings',
+                expect.objectContaining({ recordingType: 'album' })
+            );
+        });
+
     });
 
     describe('usePeople', () => {

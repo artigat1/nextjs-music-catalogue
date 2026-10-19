@@ -21,6 +21,7 @@ export const mockPerson: Person & { id: string } = {
 export const mockRecording: Recording & { id: string } = {
     id: 'recording-1',
     title: 'La Bohème',
+    recordingType: 'live',
     imageUrl: 'https://example.com/image.jpg',
     info: 'A beautiful performance',
     releaseYear: 2023,

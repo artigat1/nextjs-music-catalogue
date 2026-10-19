@@ -9,6 +9,7 @@ import {
     updateDoc,
     deleteDoc,
     query,
+    where,
     orderBy,
     limit,
     startAfter,
@@ -16,6 +17,7 @@ import {
     WithFieldValue,
     UpdateData,
     QueryDocumentSnapshot,
+    QueryConstraint,
 } from "firebase/firestore";
 
 // Generic helpers
@@ -60,27 +62,30 @@ export interface PaginatedResult<T> {
     hasMore: boolean;
 }
 
+export interface EqualityFilter {
+    field: string;
+    value: unknown;
+}
+
 export const getPaginatedCollection = async <T>(
     collectionName: string,
     orderByField: string,
     orderDirection: 'asc' | 'desc' = 'desc',
     pageSize: number = 10,
-    lastDocument?: QueryDocumentSnapshot<DocumentData> | null
+    lastDocument?: QueryDocumentSnapshot<DocumentData> | null,
+    filter?: EqualityFilter
 ): Promise<PaginatedResult<T>> => {
-    let q = query(
-        collection(db, collectionName),
-        orderBy(orderByField, orderDirection),
-        limit(pageSize + 1) // Fetch one extra to check if there are more
-    );
-
-    if (lastDocument) {
-        q = query(
-            collection(db, collectionName),
-            orderBy(orderByField, orderDirection),
-            startAfter(lastDocument),
-            limit(pageSize + 1)
-        );
+    const constraints: QueryConstraint[] = [];
+    if (filter) {
+        constraints.push(where(filter.field, '==', filter.value));
     }
+    constraints.push(orderBy(orderByField, orderDirection));
+    if (lastDocument) {
+        constraints.push(startAfter(lastDocument));
+    }
+    constraints.push(limit(pageSize + 1)); // Fetch one extra to check if there are more
+
+    const q = query(collection(db, collectionName), ...constraints);
 
     const querySnapshot = await getDocs(q);
     const docs = querySnapshot.docs;

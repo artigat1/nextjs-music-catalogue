@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import TheatreCreateModal from "@/components/ui/TheatreCreateModal";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { RecordingType } from "@/types";
 import {
   useRecording,
   useTheatres,
@@ -47,6 +48,7 @@ export default function RecordingEditorPage() {
   const [oneDriveLink, setOneDriveLink] = useState("");
   const [galleryImages, setGalleryImages] = useState("");
   const [datePrecision, setDatePrecision] = useState<"year" | "full">("full");
+  const [recordingType, setRecordingType] = useState<RecordingType>("live");
 
   // Theatre Create Modal state
   const [isTheatreModalOpen, setIsTheatreModalOpen] = useState(false);
@@ -64,6 +66,7 @@ export default function RecordingEditorPage() {
     setInfo(recording.info || "");
     setOneDriveLink(recording.oneDriveLink || "");
     setGalleryImages(recording.galleryImages?.join("\n") || "");
+    setRecordingType(recording.recordingType || "live");
 
     const recDate = recording.recordingDate?.toDate();
     if (recDate) {
@@ -204,6 +207,7 @@ export default function RecordingEditorPage() {
         releaseYear,
         recordingDate: recDate,
         datePrecision,
+        recordingType,
         artistNames,
         artistIds: selectedArtistIds,
         composerIds: selectedComposerIds,
@@ -352,6 +356,24 @@ export default function RecordingEditorPage() {
             ? "Enter the 4-digit release year."
             : "Enter the exact recording date."}
         </p>
+
+        <div>
+          <label
+            htmlFor="recording-type"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Type
+          </label>
+          <select
+            id="recording-type"
+            value={recordingType}
+            onChange={(e) => setRecordingType(e.target.value as RecordingType)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="live">Live recording</option>
+            <option value="album">Cast or studio album</option>
+          </select>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -128,7 +128,7 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-rules-credentials.json"
           trap 'rm -f "$GOOGLE_APPLICATION_CREDENTIALS"' EXIT
           node -e 'require("fs").writeFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, process.env.FIREBASE_SERVICE_ACCOUNT, { mode: 0o600 })'
-          npx --yes firebase-tools@15.24.0 deploy --project music-catalogue --only firestore:rules,storage --non-interactive
+          npx --yes firebase-tools@15.24.0 deploy --project music-catalogue --only firestore:rules,firestore:indexes,storage --non-interactive
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
