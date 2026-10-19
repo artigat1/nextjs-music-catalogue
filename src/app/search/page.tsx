@@ -4,6 +4,20 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import RecordingCard from '@/components/ui/RecordingCard';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useRecordings } from '@/hooks/useQueries';
+import { Recording } from '@/types';
+
+type SortKey = 'date' | 'name';
+type SortableRecording = Recording & { id: string };
+
+const byDateDesc = (a: SortableRecording, b: SortableRecording) => b.recordingDate.toMillis() - a.recordingDate.toMillis();
+const byTitleAsc = (a: SortableRecording, b: SortableRecording) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
+
+const SORTS: Record<SortKey, { label: string; compare: (a: SortableRecording, b: SortableRecording) => number }> = {
+    date: { label: 'Date (newest first)', compare: (a, b) => byDateDesc(a, b) || byTitleAsc(a, b) },
+    name: { label: 'Name (A–Z)', compare: (a, b) => byTitleAsc(a, b) || byDateDesc(a, b) },
+};
+
+const parseSortKey = (value: string | null): SortKey => (value === 'name' ? 'name' : 'date');
 
 function SearchContent() {
     const router = useRouter();
@@ -12,12 +26,14 @@ function SearchContent() {
 
     const initialQuery = searchParams.get('q') || '';
     const initialType = (searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all';
+    const initialSortKey = parseSortKey(searchParams.get('sort'));
 
     const { data: recordings = [], isLoading: loading } = useRecordings();
 
     // Initialize state from URL
     const [searchTerm, setSearchTerm] = useState(initialQuery);
     const [searchType, setSearchType] = useState<'all' | 'title' | 'artist' | 'theatre'>(initialType);
+    const [sortKey, setSortKey] = useState<SortKey>(initialSortKey);
 
     // Sync URL with State (Debounced)
     useEffect(() => {
@@ -36,6 +52,12 @@ function SearchContent() {
                 params.delete('type');
             }
 
+            if (sortKey !== 'date') {
+                params.set('sort', sortKey);
+            } else {
+                params.delete('sort');
+            }
+
             const newQuery = params.toString();
             const currentQuery = searchParams.toString();
 
@@ -45,7 +67,7 @@ function SearchContent() {
         }, 300); // 300ms debounce
 
         return () => clearTimeout(timer);
-    }, [searchTerm, searchType, pathname, router, searchParams]);
+    }, [searchTerm, searchType, sortKey, pathname, router, searchParams]);
 
     // Sync State with URL (Handle Back/Forward navigation)
     const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
@@ -53,6 +75,7 @@ function SearchContent() {
         setPrevSearchParams(searchParams);
         setSearchTerm(searchParams.get('q') || '');
         setSearchType((searchParams.get('type') as 'all' | 'title' | 'artist' | 'theatre') || 'all');
+        setSortKey(parseSortKey(searchParams.get('sort')));
     }
 
     // Filter recordings using useMemo
@@ -75,6 +98,11 @@ function SearchContent() {
             return matchTitle || matchTheatre || matchArtist;
         });
     }, [searchTerm, searchType, recordings]);
+
+    const sortedRecordings = useMemo(
+        () => [...filteredRecordings].sort(SORTS[sortKey].compare),
+        [filteredRecordings, sortKey]
+    );
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -105,6 +133,18 @@ function SearchContent() {
                             <option value="theatre">Theatre/City</option>
                         </select>
                     </div>
+                    <div className="w-full md:w-48">
+                        <label className="block text-sm font-medium text-foreground/80 mb-1">Sort By</label>
+                        <select
+                            value={sortKey}
+                            onChange={(e) => setSortKey(e.target.value as SortKey)}
+                            className="w-full px-4 py-2 border border-accent/30 rounded-md focus:ring-accent focus:border-accent bg-background text-foreground"
+                        >
+                            {Object.entries(SORTS).map(([key, { label }]) => (
+                                <option key={key} value={key}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -112,11 +152,11 @@ function SearchContent() {
                 <div className="text-center py-12 text-foreground/60">Loading...</div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredRecordings.map((recording) => (
+                    {sortedRecordings.map((recording) => (
                         <RecordingCard key={recording.id} recording={recording} />
                     ))}
 
-                    {filteredRecordings.length === 0 && (
+                    {sortedRecordings.length === 0 && (
                         <div className="col-span-full text-center text-foreground/50 py-12">
                             No recordings found matching your search.
                         </div>
