@@ -29,6 +29,10 @@ Requires a `.env.local` with `NEXT_PUBLIC_FIREBASE_*` variables (see README.md) 
 
 CI (`.github/workflows/ci-cd.yml`) runs lint, test, and build on push to master, then deploys to Firebase Hosting.
 
+## Admin access (service account)
+
+The Firebase admin service-account key lives at the root of the main checkout, `/Users/steve/projects/personal/nextjs-music-catalogue/music-catalogue-firebase-adminsdk-fbsvc-e3d5586914.json`. It is not in git: `.gitignore` excludes `*-firebase-adminsdk-*.json`. Use it for one-off `firebase-admin` scripts such as catalogue imports, passing its path in an environment variable. Never commit it, copy it into the repo tree elsewhere, or print its contents. It grants full admin access to the `music-catalogue` project, so if it leaks, revoke it under Google Cloud console → IAM → Service accounts → Keys.
+
 ## Architecture
 
 There is no server-side data layer — no API routes, no server actions. All Firebase access happens client-side; pages that touch data are `'use client'` components. The flow is:
