@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { signOut } from '@/firebase/auth';
 
 export default function Navbar() {
     const { user } = useAuth();
+    const router = useRouter();
 
     return (
         <nav className="bg-[#020609] shadow-sm border-b border-accent/30">
@@ -33,7 +35,7 @@ export default function Navbar() {
                                 const form = e.target as HTMLFormElement;
                                 const input = form.elements.namedItem('search') as HTMLInputElement;
                                 if (input.value.trim()) {
-                                    window.location.href = `/search?q=${encodeURIComponent(input.value.trim())}`;
+                                    router.push(`/search?q=${encodeURIComponent(input.value.trim())}`);
                                 }
                             }} className="relative hidden md:block">
                                 <input
