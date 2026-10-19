@@ -6,16 +6,15 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useRecordings } from '@/hooks/useQueries';
 import { Recording } from '@/types';
 
-type SortKey = 'date' | 'name';
-type SortableRecording = Recording & { id: string };
+const titleCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+const byDateDesc = (a: Recording, b: Recording) => b.recordingDate.toMillis() - a.recordingDate.toMillis();
+const byTitleAsc = (a: Recording, b: Recording) => titleCollator.compare(a.title, b.title);
 
-const byDateDesc = (a: SortableRecording, b: SortableRecording) => b.recordingDate.toMillis() - a.recordingDate.toMillis();
-const byTitleAsc = (a: SortableRecording, b: SortableRecording) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base', numeric: true });
-
-const SORTS: Record<SortKey, { label: string; compare: (a: SortableRecording, b: SortableRecording) => number }> = {
-    date: { label: 'Date (newest first)', compare: (a, b) => byDateDesc(a, b) || byTitleAsc(a, b) },
-    name: { label: 'Name (A–Z)', compare: (a, b) => byTitleAsc(a, b) || byDateDesc(a, b) },
+const SORTS = {
+    date: { label: 'Date (newest first)', compare: (a: Recording, b: Recording) => byDateDesc(a, b) || byTitleAsc(a, b) },
+    name: { label: 'Name (A–Z)', compare: (a: Recording, b: Recording) => byTitleAsc(a, b) || byDateDesc(a, b) },
 };
+type SortKey = keyof typeof SORTS;
 
 const parseSortKey = (value: string | null): SortKey => (value === 'name' ? 'name' : 'date');
 
@@ -78,14 +77,19 @@ function SearchContent() {
         setSortKey(parseSortKey(searchParams.get('sort')));
     }
 
+    const sortedRecordings = useMemo(
+        () => [...recordings].sort(SORTS[sortKey].compare),
+        [recordings, sortKey]
+    );
+
     // Filter recordings using useMemo
     const filteredRecordings = useMemo(() => {
         if (!searchTerm) {
-            return recordings;
+            return sortedRecordings;
         }
 
         const lowerTerm = searchTerm.toLowerCase();
-        return recordings.filter(rec => {
+        return sortedRecordings.filter(rec => {
             const matchTitle = rec.title.toLowerCase().includes(lowerTerm);
             const matchTheatre = rec.theatreName?.toLowerCase().includes(lowerTerm) || rec.city?.toLowerCase().includes(lowerTerm);
             const matchArtist = rec.artistNames?.some(name => name.toLowerCase().includes(lowerTerm));
@@ -97,12 +101,7 @@ function SearchContent() {
             // 'all'
             return matchTitle || matchTheatre || matchArtist;
         });
-    }, [searchTerm, searchType, recordings]);
-
-    const sortedRecordings = useMemo(
-        () => [...filteredRecordings].sort(SORTS[sortKey].compare),
-        [filteredRecordings, sortKey]
-    );
+    }, [searchTerm, searchType, sortedRecordings]);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -153,11 +152,11 @@ function SearchContent() {
                 <div className="text-center py-12 text-foreground/60">Loading...</div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sortedRecordings.map((recording) => (
+                    {filteredRecordings.map((recording) => (
                         <RecordingCard key={recording.id} recording={recording} />
                     ))}
 
-                    {sortedRecordings.length === 0 && (
+                    {filteredRecordings.length === 0 && (
                         <div className="col-span-full text-center text-foreground/50 py-12">
                             No recordings found matching your search.
                         </div>

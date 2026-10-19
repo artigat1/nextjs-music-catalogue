@@ -23,7 +23,7 @@ vi.mock('@/components/ui/RecordingCard', () => ({
     default: ({ recording }: { recording: { title: string } }) => <div data-testid="card">{recording.title}</div>,
 }));
 
-const sortSelect = () => screen.getAllByRole('combobox')[1];
+const sortSelect = () => screen.getByLabelText('Sort By');
 const cardTitles = () => screen.getAllByTestId('card').map(card => card.textContent);
 
 it('follows the URL query on back/forward navigation', () => {
