@@ -27,7 +27,9 @@ Requires a `.env.local` with `NEXT_PUBLIC_FIREBASE_*` variables (see README.md) 
 
 **Pre-commit hook** (husky) runs `lint-staged` (`eslint --fix` on staged `.ts`/`.tsx`) and `npx tsc --noEmit`. A commit fails if typechecking fails, so run `npx tsc --noEmit` before committing to catch errors early.
 
-CI (`.github/workflows/ci-cd.yml`) runs lint, test, and build on push to master, then deploys to Firebase Hosting.
+CI (`.github/workflows/ci-cd.yml`) runs lint, test, and build on pull requests and on push to master. Only a push to master deploys to Firebase Hosting.
+
+**Finishing work:** when a change is complete, always open a PR. Branch from up-to-date `origin/master`, commit only the files that belong to the change, push, and run `gh pr create --base master`. Don't leave finished work uncommitted, and never push straight to master, because merging the PR is what deploys. Stage files explicitly: unrelated local edits in the worktree belong to the user.
 
 ## Admin access (service account)
 
