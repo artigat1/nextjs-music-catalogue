@@ -79,26 +79,12 @@ describe('useQueries Hooks', () => {
     describe('useInfiniteRecordings', () => {
         const emptyPage = { items: [], lastDoc: null, hasMore: false };
 
-        it('queries without a filter by default', async () => {
-            vi.mocked(firestoreModule.getPaginatedCollection).mockResolvedValue(emptyPage);
-
-            const { result } = renderHook(() => useInfiniteRecordings(10), {
-                wrapper: createWrapper(),
-            });
-
-            await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(firestoreModule.getPaginatedCollection).toHaveBeenCalledWith(
-                'recordings', 'recordingDate', 'desc', 10, null, undefined
-            );
-        });
-
-        it('filters by recording type and refetches when the type changes', async () => {
+        it('orders live recordings newest first and cast albums by title, refetching on switch', async () => {
             vi.mocked(firestoreModule.getPaginatedCollection).mockResolvedValue(emptyPage);
 
             const { result, rerender } = renderHook(
-                ({ type }: { type?: 'live' | 'album' }) => useInfiniteRecordings(10, type),
-                { wrapper: createWrapper(), initialProps: { type: 'live' as 'live' | 'album' | undefined } }
+                ({ type }: { type: 'live' | 'album' }) => useInfiniteRecordings(10, type),
+                { wrapper: createWrapper(), initialProps: { type: 'live' as 'live' | 'album' } }
             );
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -110,7 +96,7 @@ describe('useQueries Hooks', () => {
 
             await waitFor(() =>
                 expect(firestoreModule.getPaginatedCollection).toHaveBeenLastCalledWith(
-                    'recordings', 'recordingDate', 'desc', 10, null, { field: 'recordingType', value: 'album' }
+                    'recordings', 'title', 'asc', 10, null, { field: 'recordingType', value: 'album' }
                 )
             );
         });
