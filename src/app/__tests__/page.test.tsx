@@ -41,62 +41,57 @@ beforeEach(() => {
 const lastTypeArg = () => queries.useInfiniteRecordings.mock.lastCall?.[1];
 const segment = (name: string) => screen.getByRole('button', { name });
 
-it('shows every recording with no filter by default', () => {
+it('shows live recordings by default', () => {
     render(<Home />);
 
-    expect(screen.getByRole('heading', { name: 'Latest Recordings' })).toBeInTheDocument();
-    expect(segment('All')).toHaveAttribute('aria-pressed', 'true');
-    expect(lastTypeArg()).toBeUndefined();
+    expect(screen.getByRole('heading', { name: 'Latest Live Recordings' })).toBeInTheDocument();
+    expect(segment('Live')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'All' })).not.toBeInTheDocument();
+    expect(lastTypeArg()).toBe('live');
     expect(screen.getByTestId('card')).toHaveTextContent('Wicked');
 });
 
-it.each([
-    ['live', 'Live', 'Latest Live Recordings'],
-    ['album', 'Cast albums', 'Latest Cast Albums'],
-])('loads the %s view from a deep link', (view, label, heading) => {
+it('loads the cast album view from a deep link', () => {
+    nav.params = new URLSearchParams('view=album');
+    render(<Home />);
+
+    expect(lastTypeArg()).toBe('album');
+    expect(segment('Cast albums')).toHaveAttribute('aria-pressed', 'true');
+    expect(segment('Live')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('heading', { name: 'Cast Albums' })).toBeInTheDocument();
+});
+
+it.each(['bogus', 'all', 'live'])('falls back to live recordings for view=%s', (view) => {
     nav.params = new URLSearchParams(`view=${view}`);
     render(<Home />);
 
-    expect(lastTypeArg()).toBe(view);
-    expect(segment(label)).toHaveAttribute('aria-pressed', 'true');
-    expect(segment('All')).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(lastTypeArg()).toBe('live');
+    expect(segment('Live')).toHaveAttribute('aria-pressed', 'true');
 });
 
-it('falls back to all recordings for an unknown view', () => {
-    nav.params = new URLSearchParams('view=bogus');
+it('puts cast albums in the URL and drops the param for Live', async () => {
     render(<Home />);
-
-    expect(lastTypeArg()).toBeUndefined();
-    expect(segment('All')).toHaveAttribute('aria-pressed', 'true');
-});
-
-it('puts the chosen view in the URL and drops it for All', async () => {
-    render(<Home />);
-
-    await userEvent.click(segment('Live'));
-    expect(nav.push).toHaveBeenLastCalledWith('/?view=live', { scroll: false });
 
     await userEvent.click(segment('Cast albums'));
     expect(nav.push).toHaveBeenLastCalledWith('/?view=album', { scroll: false });
 
-    await userEvent.click(segment('All'));
+    await userEvent.click(segment('Live'));
     expect(nav.push).toHaveBeenLastCalledWith('/', { scroll: false });
 });
 
 it('switches the query and control when the URL changes on back/forward', () => {
     const { rerender } = render(<Home />);
-    expect(lastTypeArg()).toBeUndefined();
-
-    nav.params = new URLSearchParams('view=live');
-    rerender(<Home />);
     expect(lastTypeArg()).toBe('live');
-    expect(segment('Live')).toHaveAttribute('aria-pressed', 'true');
+
+    nav.params = new URLSearchParams('view=album');
+    rerender(<Home />);
+    expect(lastTypeArg()).toBe('album');
+    expect(segment('Cast albums')).toHaveAttribute('aria-pressed', 'true');
 
     nav.params = new URLSearchParams();
     rerender(<Home />);
-    expect(lastTypeArg()).toBeUndefined();
-    expect(segment('All')).toHaveAttribute('aria-pressed', 'true');
+    expect(lastTypeArg()).toBe('live');
+    expect(segment('Live')).toHaveAttribute('aria-pressed', 'true');
 });
 
 it('keeps the control visible while a view loads', () => {
@@ -109,7 +104,7 @@ it('keeps the control visible while a view loads', () => {
     });
     render(<Home />);
 
-    expect(screen.getByText('Loading latest recordings...')).toBeInTheDocument();
+    expect(screen.getByText('Loading recordings...')).toBeInTheDocument();
     expect(screen.queryByText('No recordings found.')).not.toBeInTheDocument();
     expect(segment('Live')).toBeInTheDocument();
 });

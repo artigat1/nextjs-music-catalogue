@@ -7,6 +7,14 @@
         { "fieldPath": "recordingType", "order": "ASCENDING" },
         { "fieldPath": "recordingDate", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "recordings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recordingType", "order": "ASCENDING" },
+        { "fieldPath": "title", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

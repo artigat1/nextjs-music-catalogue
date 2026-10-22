@@ -28,17 +28,24 @@ export function useRecordings() {
     });
 }
 
-export function useInfiniteRecordings(pageSize: number = 10, recordingType?: RecordingType) {
+// Live recordings read newest first; cast albums read A–Z by title.
+const RECORDING_ORDER: Record<RecordingType, { field: string; direction: 'asc' | 'desc' }> = {
+    live: { field: 'recordingDate', direction: 'desc' },
+    album: { field: 'title', direction: 'asc' },
+};
+
+export function useInfiniteRecordings(pageSize: number, recordingType: RecordingType) {
     return useInfiniteQuery({
-        queryKey: [QUERY_KEYS.recordings, 'infinite', pageSize, recordingType ?? null],
+        queryKey: [QUERY_KEYS.recordings, 'infinite', pageSize, recordingType],
         queryFn: async ({ pageParam }) => {
+            const { field, direction } = RECORDING_ORDER[recordingType];
             return getPaginatedCollection<Recording & { id: string }>(
                 'recordings',
-                'recordingDate',
-                'desc',
+                field,
+                direction,
                 pageSize,
                 pageParam as QueryDocumentSnapshot<DocumentData> | null,
-                recordingType ? { field: 'recordingType', value: recordingType } : undefined
+                { field: 'recordingType', value: recordingType }
             );
         },
         initialPageParam: null as QueryDocumentSnapshot<DocumentData> | null,

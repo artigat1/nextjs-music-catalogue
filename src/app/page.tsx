@@ -7,13 +7,10 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import RecordingCard from '@/components/ui/RecordingCard';
 
 const VIEWS = {
-  all: { label: 'All', heading: 'Latest Recordings' },
   live: { label: 'Live', heading: 'Latest Live Recordings' },
-  album: { label: 'Cast albums', heading: 'Latest Cast Albums' },
+  album: { label: 'Cast albums', heading: 'Cast Albums' },
 };
 type ViewKey = keyof typeof VIEWS;
-
-const parseView = (value: string | null): ViewKey => (value === 'live' || value === 'album' ? value : 'all');
 
 export default function Home() {
   return (
@@ -28,7 +25,7 @@ export default function Home() {
 function HomeContent() {
   const router = useRouter();
   const pathname = usePathname();
-  const view = parseView(useSearchParams().get('view'));
+  const view: ViewKey = useSearchParams().get('view') === 'album' ? 'album' : 'live';
 
   const {
     data,
@@ -36,7 +33,7 @@ function HomeContent() {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useInfiniteRecordings(10, view === 'all' ? undefined : view);
+  } = useInfiniteRecordings(10, view);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +67,7 @@ function HomeContent() {
   }, [handleObserver]);
 
   const selectView = (next: ViewKey) => {
-    router.push(next === 'all' ? pathname : `${pathname}?view=${next}`, { scroll: false });
+    router.push(next === 'live' ? pathname : `${pathname}?view=${next}`, { scroll: false });
   };
 
   return (
@@ -94,7 +91,7 @@ function HomeContent() {
       </div>
 
       {isLoading && (
-        <div className="text-center text-foreground/60">Loading latest recordings...</div>
+        <div className="text-center text-foreground/60">Loading recordings...</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
