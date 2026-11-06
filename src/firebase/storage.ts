@@ -96,6 +96,11 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
     const storageRef = ref(storage, imageUrl);
     await deleteObject(storageRef);
   } catch (error) {
+    // The file is already gone (e.g. deleted out-of-band), so the recording only
+    // holds a dangling reference. Treat it as deleted so the caller can drop it.
+    if ((error as { code?: string }).code === "storage/object-not-found") {
+      return;
+    }
     console.error("Error deleting image from Firebase Storage:", error);
     throw error;
   }
